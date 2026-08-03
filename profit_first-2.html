@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Profit First — Interactive Guide</title>
+<style>
+  :root{
+    --ink:#173A79;          /* Profit First brand navy, sampled from the book's logo */
+    --paper:#ffffff;
+    --paper-dim:#f2f2f2;
+    --accent:#93b616;
+    --accent-dim:#B3DB18;   /* Profit First brand lime, sampled from the book's logo */
+    --line: rgba(23,58,121,0.16);
+    --red:#a8433a;
+    --grey-head:#7B7979;    /* the grey used in the book's own table headers */
+    --table-border:#111111; /* the near-black used for the book's table borders */
+  }
+  * { box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height:1.5;
+    min-width: 1180px; /* desktop-only, intentionally not responsive */
+  }
+  .mono{ font-family: ui-monospace, "SF Mono", "IBM Plex Mono", Menlo, Consolas, monospace; }
+
+  /* ===== top bar + tabs ===== */
+  .topbar{ position:sticky; top:0; z-index:50; background:var(--paper); border-bottom:3px solid var(--ink); }
+  .topbar-inner{
+    max-width:1080px; margin:0 auto; padding:16px 40px 12px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{ font-family: Georgia, serif; font-weight:700; font-size:18px; color:var(--ink); }
+  .brand .lime{ color:#93b616; }
+  .brand small{ font-family: ui-monospace, monospace; font-size:11px; font-weight:400; color:#5c6b62; margin-left:8px; text-transform:uppercase; letter-spacing:.05em; }
+  .reset-all-btn{
+    font-family: ui-monospace, monospace; font-size:11.5px; background:var(--ink); color:#fff; border:none;
+    border-radius:5px; padding:8px 14px; cursor:pointer;
+  }
+  .reset-all-btn:hover{ background:#0f2a5c; }
+  .tabbar{ max-width:1080px; margin:0 auto; padding:0 40px; display:flex; gap:6px; overflow-x:auto; }
+  .tab-btn{
+    font-family: ui-monospace, monospace; font-size:11.5px; padding:9px 14px; white-space:nowrap;
+    background:var(--paper-dim); border:2px solid var(--ink); border-bottom:none;
+    border-radius:6px 6px 0 0; cursor:pointer; color:var(--ink); flex-shrink:0;
+  }
+  .tab-btn.active{ background:var(--ink); color:var(--accent-dim); font-weight:600; }
+  .tab-btn:hover:not(.active){ background:#e6e6e6; }
+
+  .page-section{ display:none; }
+  .page-section.active{ display:block; }
+
+  .page{ max-width: 1080px; margin:0 auto; padding: 40px 40px 120px; }
+
+  /* header */
+  .kicker{
+    font-family: ui-monospace, monospace;
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:#5c6b62; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:26px;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  h1.hero{
+    font-family: Georgia, "Iowan Old Style", serif;
+    font-weight:600;
+    font-size: 44px;
+    line-height:1.15;
+    letter-spacing:-0.01em;
+    margin: 0 0 14px;
+  }
+  h1.hero.small{ font-size:34px; }
+  .hero-sub{ font-size:16px; color:#3c4a42; max-width:68ch; margin-bottom: 34px;}
+  .hero-sub b{ color:var(--ink); }
+
+  /* the flip — one line formula, notes below */
+  .flip{ display:flex; flex-direction:column; gap:10px; margin: 26px 0 44px; }
+  .flip-row{ padding:16px 20px; border-radius:6px; }
+  .flip-row.old{ background:#efe6e2; }
+  .flip-row.new{ background:var(--ink); }
+  .formula-tag{
+    display:block;
+    font-family: ui-monospace, monospace; font-size:10px; text-transform:uppercase; letter-spacing:.06em;
+    text-decoration:none !important; opacity:.7; margin-bottom:8px;
+  }
+  .formula-line{
+    font-family: ui-monospace, monospace; font-size:17px; white-space:nowrap;
+    display:block;
+  }
+  .flip-row.old .formula-tag{ color:#7a4a41; }
+  .flip-row.old .formula-line{ color:#7a4a41; text-decoration: line-through; text-decoration-color:#a8433a99; }
+  .flip-row.new .formula-tag{ color:var(--accent-dim); }
+  .flip-row.new .formula-line{ color:var(--accent-dim); font-weight:600; }
+  .formula-note{ font-family: ui-monospace, monospace; font-size:12.5px; margin-top:8px; opacity:.75; }
+  .flip-row.old .formula-note{ color:#7a4a41; }
+  .flip-row.new .formula-note{ color:var(--accent-dim); }
+
+  /* comic-panel cards */
+  .panel{
+    position:relative;
+    background:white;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+    box-shadow: 9px 9px 0 var(--ink);
+    padding: 34px 34px 30px;
+    margin: 0 0 64px;
+  }
+  .panel-tab{
+    position:absolute; top:-18px; left:28px;
+    background:var(--ink); color:var(--accent-dim);
+    font-family: ui-monospace, monospace; font-size:12px; font-weight:600;
+    letter-spacing:.04em; text-transform:uppercase;
+    padding:6px 14px; border-radius:5px;
+    transform: rotate(-1.2deg);
+    box-shadow: 3px 3px 0 rgba(20,32,27,0.25);
+  }
+  h2{ font-family: Georgia, serif; font-weight:600; font-size:25px; margin:6px 0 8px; }
+  .section-desc{ color:#3c4a42; font-size:14.5px; max-width: 70ch; margin: 0 0 24px; }
+
+  /* input card contents */
+  .input-grid{ display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:18px; }
+  .field label{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#5c6b62; margin-bottom:6px; font-family:ui-monospace,monospace; }
+  .field .input-wrap{ position:relative; }
+  .field .input-wrap span{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#8a968f; font-size:15px; }
+  .field input{
+    width:100%; padding:10px 12px; font-size:16px; border:1px solid var(--line);
+    border-radius:6px; background:var(--paper-dim); color:var(--ink); font-family: ui-monospace, monospace;
+  }
+  .field input.with-dollar{ padding-left:26px; }
+  .field input:focus{ outline:2px solid var(--accent); outline-offset:1px; background:white; }
+
+  .real-rev-out{
+    margin-top:22px; padding-top:18px; border-top:1px dashed var(--line);
+    font-size:14px; color:#3c4a42;
+  }
+  .real-rev-out b{ font-family:ui-monospace,monospace; color:var(--ink); font-size:17px; }
+  .save-note{ font-size:12px; color:#8a968f; font-family:ui-monospace,monospace; margin-top:10px; }
+
+  /* TAP table — reproduced in the book's own style: grey header, black rule, letter-coded bands */
+  .tap-table-wrap{ border:2px solid var(--table-border); margin-bottom:14px; }
+  table.tap-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.tap-table th{
+    text-align:center; font-family: ui-sans-serif, sans-serif; font-size:13px; font-weight:700;
+    color:#ffffff; background:var(--grey-head); padding:10px 8px; border:1px solid var(--table-border);
+  }
+  table.tap-table th:first-child{ background:var(--grey-head); }
+  table.tap-table td{
+    padding:11px 10px; border:1px solid var(--table-border); font-family: ui-sans-serif, sans-serif;
+    text-align:center; background:#fff;
+  }
+  table.tap-table td.rowlabel{ text-align:left; font-weight:700; background:#fafafa; }
+  table.tap-table th.active-col, table.tap-table td.active-col{ background:var(--accent-dim); }
+  table.tap-table td.active-col{ font-weight:800; }
+  .tap-caption{ font-family: Georgia, serif; font-weight:600; font-size:13.5px; text-align:center; padding:10px 0 18px; color:var(--ink); }
+
+  .band-note{
+    font-size:13px; color:#5c6b62; margin: 0 0 20px; padding:10px 14px; background:var(--paper-dim);
+    border-radius:6px; border-left:3px solid var(--accent);
+  }
+  .subhead{ font-family: ui-monospace, monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#5c6b62; margin: 0 0 12px; }
+
+  /* allocation bars */
+  .alloc-row{ margin-bottom: 16px; }
+  .alloc-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .alloc-name{ font-size:14px; font-weight:600; }
+  .alloc-figs{ font-family:ui-monospace,monospace; font-size:13px; color:#3c4a42; }
+  .alloc-figs .amt{ color:var(--ink); font-weight:600; }
+  .bar-track{ height:22px; background:var(--paper-dim); border-radius:4px; overflow:hidden; border:1px solid var(--line); }
+  .bar-fill{ height:100%; background:var(--ink); }
+  .bar-fill.accent{ background:var(--accent); }
+
+  /* narrative callouts */
+  .callout{
+    font-size:15.5px; color:#28362f; background:var(--paper-dim); border:1px solid var(--line);
+    border-radius:8px; padding:18px 20px; margin: 0 0 16px;
+  }
+  .callout:last-child{ margin-bottom:0; }
+  .callout .num{ font-weight:700; color:var(--ink); font-family: ui-monospace, monospace; background: var(--accent-dim); padding:1px 6px; border-radius:3px; }
+
+  /* quarterly + owner draws */
+  .quarter-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap:12px; margin-bottom: 28px; }
+  .qcard{ background:var(--paper-dim); border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center; }
+  .qcard .qlabel{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:#5c6b62; font-family:ui-monospace,monospace; }
+  .qcard .qval{ font-family:ui-monospace,monospace; font-size:19px; font-weight:700; margin-top:6px; }
+
+  .draw-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .draw-table th{ text-align:left; font-family:ui-monospace,monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:#5c6b62; padding:8px 10px; border-bottom:2px solid var(--ink); }
+  .draw-table td{ padding:10px; border-bottom:1px solid var(--line); font-family:ui-monospace,monospace; }
+  .draw-table td.owner-name{ font-family:ui-sans-serif,sans-serif; font-weight:600; }
+
+  footer{ margin-top:20px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:#7a8580; font-family:ui-monospace,monospace; }
+
+  .reset-btn{
+    font-family: ui-monospace, monospace; font-size:12px; background:none; border:1px solid var(--line);
+    border-radius:5px; padding:6px 11px; cursor:pointer; color:#3c4a42;
+  }
+  .reset-btn:hover{ background: var(--paper-dim); }
+
+  /* chapter stub pages */
+  .stub-panel{
+    background:var(--paper-dim); border:2px dashed var(--line); border-radius:10px;
+    padding:40px; text-align:center; color:#5c6b62;
+  }
+  .stub-panel .stub-icon{ font-size:28px; margin-bottom:10px; }
+  .stub-panel h2{ color:var(--ink); }
+  .stub-panel p{ max-width:56ch; margin:10px auto 0; font-size:14.5px; }
+  .chapter-teaser{
+    font-size:15px; color:#28362f; background:white; border:1px solid var(--line); border-radius:8px;
+    padding:18px 20px; margin: 20px 0 0; text-align:left;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">PROFIT <span class="lime">FIR$T</span><small>Interactive Guide</small></div>
+    <button class="reset-all-btn" onclick="resetAllData()">⟲ Reset all data (every page)</button>
+  </div>
+  <div class="tabbar" id="tabbar"></div>
+</div>
+
+<!-- ============ OVERVIEW ============ -->
+<section id="page-overview" class="page-section">
+<div class="page">
+
+  <div class="kicker">
+    <span>Cash Management System · Overview · Desktop layout</span>
+    <button class="reset-btn" onclick="resetOverview()">↺ reset this page</button>
+  </div>
+
+  <h1 class="hero">Profit isn't what's left over.<br>It's what you take first.</h1>
+  <p class="hero-sub">Based on <b>Profit First</b> by Mike Michalowicz. Type your own revenue and costs below — every number on this page, including the book's examples, updates to reflect <b>your</b> business instead of a hypothetical one. Your numbers are saved automatically in this browser.</p>
+
+  <div class="flip">
+    <div class="flip-row old">
+      <div class="formula-tag">Old formula</div>
+      <div class="formula-line">Revenue − Expenses = Profit</div>
+      <div class="formula-note">profit is whatever's left, so it's usually nothing</div>
+    </div>
+    <div class="flip-row new">
+      <div class="formula-tag">Profit First formula</div>
+      <div class="formula-line">Revenue − Profit = Expenses</div>
+      <div class="formula-note">you pay yourself first, expenses shrink to fit what's left</div>
+    </div>
+  </div>
+
+  <!-- SECTION 01: INPUT -->
+  <div class="panel">
+    <div class="panel-tab">01 · Inputs</div>
+    <h2>Plug in your numbers</h2>
+    <p class="section-desc">Profit First works off "Real Revenue" — total revenue minus what you pay subcontractors or materials to deliver the work. For a dev/marketing shop, that's usually contractor and tooling pass-through costs. Also set how many owners split the Owner's Pay account, and how often draws go out.</p>
+
+    <div class="input-grid">
+      <div class="field">
+        <label for="revenue">Annual revenue</label>
+        <div class="input-wrap"><span>$</span><input class="with-dollar" type="number" id="revenue" value="600000" min="0" oninput="onOverviewInput()"></div>
+      </div>
+      <div class="field">
+        <label for="matcost">Materials / subcontractors</label>
+        <div class="input-wrap"><span>$</span><input class="with-dollar" type="number" id="matcost" value="120000" min="0" oninput="onOverviewInput()"></div>
+      </div>
+      <div class="field">
+        <label for="numowners">Number of owners</label>
+        <input type="number" id="numowners" value="4" min="1" oninput="onOverviewInput()">
+      </div>
+      <div class="field">
+        <label for="drawspermonth">Owner draws / month</label>
+        <input type="number" id="drawspermonth" value="2" min="1" oninput="onOverviewInput()">
+      </div>
+    </div>
+
+    <div class="real-rev-out">Real Revenue &nbsp;=&nbsp; <b id="realrev-out">$0</b> &nbsp;<span style="color:#8a968f">(this is the number every allocation below is based on)</span></div>
+    <div class="save-note">◆ saved automatically to this browser — use "reset this page" above to clear just these numbers, or "reset all data" up top to wipe every page</div>
+  </div>
+
+  <!-- SECTION 02: TAPS -->
+  <div class="panel">
+    <div class="panel-tab">02 · Target allocation</div>
+    <h2>The Profit First percentage table</h2>
+    <p class="section-desc">The book publishes Target Allocation Percentages (TAPs) by revenue band — the mix a healthy business at your size is aiming for. Your row is highlighted below.</p>
+
+    <div class="subhead">Figure 4 — Target Allocation Percentages (TAPs), from the book</div>
+    <div class="tap-table-wrap">
+      <table class="tap-table" id="tap-table"></table>
+    </div>
+    <div class="tap-caption">Your revenue lands in the highlighted column</div>
+
+    <div class="subhead">Your numbers, applied</div>
+    <div class="band-note" id="band-note">Revenue band: —</div>
+    <div id="tap-alloc"></div>
+  </div>
+
+  <!-- SECTION 03: NARRATIVE CALLOUTS -->
+  <div class="panel">
+    <div class="panel-tab">03 · What this means</div>
+    <h2>What this means, in plain terms</h2>
+    <div class="callout" id="callout-profit">
+      At the target rate, this business sets aside <span class="num" id="c-profit-amt">$0</span> in profit per year — before a single bill gets paid.
+    </div>
+    <div class="callout" id="callout-owner">
+      The owner's pay account targets <span class="num" id="c-owner-amt">$0</span> a year (<span class="num" id="c-owner-pct">0%</span> of Real Revenue). Split <span class="num" id="c-numowners">4</span> ways, that's <span class="num" id="c-owner-each-yr">$0</span> per owner per year — or <span class="num" id="c-owner-each-draw">$0</span> per owner on each draw.
+    </div>
+    <div class="callout" id="callout-opex">
+      That leaves <span class="num" id="c-opex-amt">$0</span> to run the entire operation — payroll, tools, ads, everything. Parkinson's Law says the team will find a way to fit inside it.
+    </div>
+  </div>
+
+  <!-- SECTION 04: QUARTERLY + OWNER DRAWS -->
+  <div class="panel">
+    <div class="panel-tab">04 · Distributions</div>
+    <h2>Quarterly profit &amp; owner draws</h2>
+    <p class="section-desc">Every quarter, half the Profit Account balance gets distributed to the owners as a reward; the rest stays as a cushion. Owner's Pay is drawn on a fixed schedule instead — here's both, split across <span id="draws-count-label">4</span> owners.</p>
+
+    <div class="quarter-grid">
+      <div class="qcard"><div class="qlabel">Profit / quarter</div><div class="qval" id="q-profit">$0</div></div>
+      <div class="qcard"><div class="qlabel">Owner distribution</div><div class="qval" id="q-dist">$0</div></div>
+      <div class="qcard"><div class="qlabel">Stays in account</div><div class="qval" id="q-stay">$0</div></div>
+      <div class="qcard"><div class="qlabel">Profit dist. / owner</div><div class="qval" id="q-dist-each">$0</div></div>
+    </div>
+
+    <div class="subhead" id="draw-schedule-label">Owner's pay draw schedule — 4 owners, 2× / month (24 draws / year)</div>
+    <table class="draw-table">
+      <thead><tr><th>Per owner, per year</th><th>Per owner, per draw</th><th>Total owner pay / year</th><th>Draws / year</th></tr></thead>
+      <tbody>
+        <tr>
+          <td id="d-owner-yr">$0</td>
+          <td id="d-owner-draw">$0</td>
+          <td id="d-owner-total">$0</td>
+          <td id="d-draws-yr">24</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>profit_first.html · numbers recalc live · saved locally in this browser only, nothing is sent anywhere</footer>
+</div>
+</section>
+
+<!-- ============ CHAPTER STUBS ============ -->
+<div id="chapter-stubs"></div>
+
+<script>
+// ===================================================================
+// CHAPTER REGISTRY (real table of contents from the book)
+// ===================================================================
+const CHAPTERS = [
+  { id:"overview", label:"Overview" },
+  { id:"ch1",  label:"Ch 1 · Taming The Beast",
+    teaser:"Why chasing more revenue doesn't fix a cash problem — and the trap of lurching from one 'quick fix' to the next instead of following a plan." },
+  { id:"ch2",  label:"Ch 2 · How Profit First Works",
+    teaser:"The core formula flip, and why forcing a constraint on spending (rather than trying to budget harder) is what actually changes behavior." },
+  { id:"ch3",  label:"Ch 3 · The Naked Truth",
+    teaser:"The Instant Assessment — a fast, honest read on where the business's cash is really going today, before changing anything." },
+  { id:"ch4",  label:"Ch 4 · Choose Your Own Adventure",
+    teaser:"Picking a realistic path from today's numbers toward the target allocation, in steps that don't shock the business." },
+  { id:"ch5",  label:"Ch 5 · Day One, Quarter One, Year One and Forever",
+    teaser:"Setting up the actual bank accounts and the ongoing weekly/quarterly rhythm that keeps the system running." },
+  { id:"ch6",  label:"Ch 6 · Destroying Debt",
+    teaser:"A Profit-First-compatible approach to paying down business debt without abandoning the profit habit to do it." },
+  { id:"ch7",  label:"Ch 7 · Found Money",
+    teaser:"Finding cash that's already inside the business — in pricing, waste, and inefficiency — instead of only looking for new sales." },
+  { id:"ch8",  label:"Ch 8 · Sticking With It",
+    teaser:"The habits and mindset shifts that keep the system alive past the first few excited months." },
+  { id:"ch9",  label:"Ch 9 · Advanced Techniques",
+    teaser:"Refinements for more complex setups — multiple partners, multiple entities, and situations the basic system doesn't cover cleanly." },
+  { id:"ch10", label:"Ch 10 · Living Profit First",
+    teaser:"Making the system a permanent operating habit rather than a one-time project." },
+  { id:"ch11", label:"Ch 11 · Where It All Falls Apart",
+    teaser:"Common ways businesses fall off the system, and how to recognize and recover from each one." },
+  { id:"ch12", label:"Ch 12 · Financial Freedom Is Just a Few Clicks Away",
+    teaser:"Where the system leads once it's fully running, and what's next after the habit sticks." },
+];
+
+// ===================================================================
+// TAB RENDERING / NAVIGATION
+// ===================================================================
+let currentPage = localStorage.getItem('profitFirst.currentPage') || 'overview';
+
+function buildStubPages(){
+  const container = document.getElementById('chapter-stubs');
+  container.innerHTML = CHAPTERS.filter(c => c.id !== 'overview').map(c => `
+    <section id="page-${c.id}" class="page-section">
+      <div class="page">
+        <div class="kicker"><span>Cash Management System · ${c.label}</span></div>
+        <h1 class="hero small">${c.label.split('· ')[1]}</h1>
+        <div class="stub-panel">
+          <div class="stub-icon">✎</div>
+          <h2>This page isn't built yet</h2>
+          <p>Tell Claude what belongs here — key ideas to visualize, a calculator to build, or figures from the book to reproduce — and it'll get the same treatment as the Overview page.</p>
+          <div class="chapter-teaser">${c.teaser}</div>
+        </div>
+      </div>
+    </section>
+  `).join('');
+}
+
+function renderTabs(){
+  document.getElementById('tabbar').innerHTML = CHAPTERS.map(c =>
+    `<button class="tab-btn ${c.id === currentPage ? 'active' : ''}" onclick="showPage('${c.id}')">${c.label}</button>`
+  ).join('');
+}
+
+function showPage(id){
+  currentPage = id;
+  document.querySelectorAll('.page-section').forEach(s => {
+    s.classList.toggle('active', s.id === 'page-' + id);
+  });
+  renderTabs();
+  try{ localStorage.setItem('profitFirst.currentPage', id); }catch(e){}
+  window.scrollTo(0,0);
+}
+
+// ===================================================================
+// OVERVIEW: TAP DATA (Figure 4, reproduced exactly as printed in the book)
+// ===================================================================
+const TAP_BANDS = [
+  { letter:"A", max: 250000,    range:"$0 – $250K",     label: "Under $250K",   profit:5,  owner:50, tax:15, opex:30 },
+  { letter:"B", max: 500000,    range:"$250K – $500K",  label: "$250K – $500K", profit:10, owner:35, tax:15, opex:40 },
+  { letter:"C", max: 1000000,   range:"$500K – $1M",    label: "$500K – $1M",   profit:15, owner:20, tax:15, opex:50 },
+  { letter:"D", max: 5000000,   range:"$1M – $5M",      label: "$1M – $5M",     profit:10, owner:10, tax:15, opex:65 },
+  { letter:"E", max: 10000000,  range:"$5M – $10M",     label: "$5M – $10M",    profit:15, owner:5,  tax:15, opex:65 },
+  { letter:"F", max: 50000000,  range:"$10M – $50M",    label: "$10M – $50M",   profit:20, owner:0,  tax:15, opex:65 },
+];
+
+const OVERVIEW_DEFAULTS = { revenue:600000, matcost:120000, numowners:4, drawspermonth:2 };
+const OVERVIEW_KEY = 'profitFirst.overview.inputs';
+
+function fmt(n){
+  return '$' + Math.round(n).toLocaleString('en-US');
+}
+
+function getBand(realRev){
+  return TAP_BANDS.find(b => realRev <= b.max) || TAP_BANDS[TAP_BANDS.length-1];
+}
+
+function renderTapTable(activeBand){
+  const table = document.getElementById('tap-table');
+  const col = (b) => b.letter === activeBand.letter ? 'active-col' : '';
+
+  let html = `<thead><tr><th></th>`;
+  TAP_BANDS.forEach(b => html += `<th class="${col(b)}">${b.letter}</th>`);
+  html += `</tr></thead><tbody>`;
+
+  const rows = [
+    { label: "Real Revenue Range", get: b => b.range },
+    { label: "Real Revenue",       get: b => "100%" },
+    { label: "Profit",             get: b => b.profit + "%" },
+    { label: "Owner's Pay",        get: b => b.owner + "%" },
+    { label: "Tax",                get: b => b.tax + "%" },
+    { label: "Operating Expenses", get: b => b.opex + "%" },
+  ];
+  rows.forEach(r => {
+    html += `<tr><td class="rowlabel">${r.label}</td>`;
+    TAP_BANDS.forEach(b => html += `<td class="${col(b)}">${r.get(b)}</td>`);
+    html += `</tr>`;
+  });
+  html += `</tbody>`;
+  table.innerHTML = html;
+}
+
+function renderAllocBlock(containerId, pct, realRev, numOwners){
+  const container = document.getElementById(containerId);
+  const rows = [
+    {key:'profit', name:'Profit', accent:true},
+    {key:'owner', name:"Owner's Pay", accent:false},
+    {key:'tax', name:'Tax', accent:false},
+    {key:'opex', name:'Operating Expenses', accent:false},
+  ];
+  container.innerHTML = rows.map(r => {
+    const p = pct[r.key];
+    const amt = realRev * p / 100;
+    const perOwner = r.key === 'owner'
+      ? `&nbsp;·&nbsp; <span class="amt">${fmt(amt / numOwners)}</span>/owner/yr`
+      : '';
+    return `
+      <div class="alloc-row">
+        <div class="alloc-top">
+          <span class="alloc-name">${r.name}</span>
+          <span class="alloc-figs"><span class="amt">${fmt(amt)}</span> / yr &nbsp;·&nbsp; ${p}%${perOwner}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill ${r.accent ? 'accent':''}" style="width:${Math.min(p,100)}%"></div></div>
+      </div>`;
+  }).join('');
+}
+
+function recalc(){
+  const revenue = parseFloat(document.getElementById('revenue').value) || 0;
+  const matcost = parseFloat(document.getElementById('matcost').value) || 0;
+  const numOwners = Math.max(parseFloat(document.getElementById('numowners').value) || 1, 1);
+  const drawsPerMonth = Math.max(parseFloat(document.getElementById('drawspermonth').value) || 1, 1);
+  const drawsPerYear = drawsPerMonth * 12;
+  const realRev = Math.max(revenue - matcost, 0);
+
+  document.getElementById('realrev-out').textContent = fmt(realRev);
+
+  const band = getBand(realRev);
+  renderTapTable(band);
+  document.getElementById('band-note').textContent = `Revenue band: ${band.label} — this is the TAP mix the book targets at this size.`;
+
+  const tap = { profit: band.profit, owner: band.owner, tax: band.tax, opex: band.opex };
+  renderAllocBlock('tap-alloc', tap, realRev, numOwners);
+
+  const profitAmt = realRev * tap.profit/100;
+  const ownerAmt = realRev * tap.owner/100;
+  const opexAmt = realRev * tap.opex/100;
+  const ownerEachYr = ownerAmt / numOwners;
+  const ownerEachDraw = ownerEachYr / drawsPerYear;
+
+  document.getElementById('c-profit-amt').textContent = fmt(profitAmt);
+  document.getElementById('c-owner-amt').textContent = fmt(ownerAmt);
+  document.getElementById('c-owner-pct').textContent = tap.owner + '%';
+  document.getElementById('c-numowners').textContent = numOwners;
+  document.getElementById('c-owner-each-yr').textContent = fmt(ownerEachYr);
+  document.getElementById('c-owner-each-draw').textContent = fmt(ownerEachDraw);
+  document.getElementById('c-opex-amt').textContent = fmt(opexAmt);
+
+  const qProfit = profitAmt/4;
+  document.getElementById('q-profit').textContent = fmt(qProfit);
+  document.getElementById('q-dist').textContent = fmt(qProfit*0.5);
+  document.getElementById('q-stay').textContent = fmt(qProfit*0.5);
+  document.getElementById('q-dist-each').textContent = fmt((qProfit*0.5)/numOwners);
+
+  document.getElementById('draws-count-label').textContent = numOwners;
+  document.getElementById('draw-schedule-label').textContent = `Owner's pay draw schedule — ${numOwners} owners, ${drawsPerMonth}× / month (${drawsPerYear} draws / year)`;
+  document.getElementById('d-owner-yr').textContent = fmt(ownerEachYr);
+  document.getElementById('d-owner-draw').textContent = fmt(ownerEachDraw);
+  document.getElementById('d-owner-total').textContent = fmt(ownerAmt);
+  document.getElementById('d-draws-yr').textContent = drawsPerYear;
+}
+
+// ---- persistence: save/load/reset for the Overview page ----
+function loadOverviewInputs(){
+  let saved = {};
+  try{ saved = JSON.parse(localStorage.getItem(OVERVIEW_KEY)) || {}; }catch(e){}
+  const vals = Object.assign({}, OVERVIEW_DEFAULTS, saved);
+  document.getElementById('revenue').value = vals.revenue;
+  document.getElementById('matcost').value = vals.matcost;
+  document.getElementById('numowners').value = vals.numowners;
+  document.getElementById('drawspermonth').value = vals.drawspermonth;
+}
+
+function saveOverviewInputs(){
+  const vals = {
+    revenue: document.getElementById('revenue').value,
+    matcost: document.getElementById('matcost').value,
+    numowners: document.getElementById('numowners').value,
+    drawspermonth: document.getElementById('drawspermonth').value,
+  };
+  try{ localStorage.setItem(OVERVIEW_KEY, JSON.stringify(vals)); }catch(e){}
+}
+
+function onOverviewInput(){
+  saveOverviewInputs();
+  recalc();
+}
+
+function resetOverview(){
+  try{ localStorage.removeItem(OVERVIEW_KEY); }catch(e){}
+  document.getElementById('revenue').value = OVERVIEW_DEFAULTS.revenue;
+  document.getElementById('matcost').value = OVERVIEW_DEFAULTS.matcost;
+  document.getElementById('numowners').value = OVERVIEW_DEFAULTS.numowners;
+  document.getElementById('drawspermonth').value = OVERVIEW_DEFAULTS.drawspermonth;
+  recalc();
+}
+
+function resetAllData(){
+  const ok = confirm('Reset every saved number on every page back to defaults? This cannot be undone.');
+  if(!ok) return;
+  Object.keys(localStorage)
+    .filter(k => k.indexOf('profitFirst.') === 0)
+    .forEach(k => localStorage.removeItem(k));
+  loadOverviewInputs();
+  recalc();
+  showPage('overview');
+}
+
+// ===================================================================
+// INIT
+// ===================================================================
+buildStubPages();
+renderTabs();
+showPage(currentPage);
+loadOverviewInputs();
+recalc();
+</script>
+</body>
+</html>
