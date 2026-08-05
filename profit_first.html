@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Profit First — Interactive Guide</title>
+<style>
+  :root{
+    --ink:#173A79;          /* Profit First brand navy, sampled from the book's logo */
+    --paper:#ffffff;
+    --paper-dim:#f2f2f2;
+    --accent:#93b616;
+    --accent-dim:#B3DB18;   /* Profit First brand lime, sampled from the book's logo */
+    --line: rgba(23,58,121,0.16);
+    --red:#a8433a;
+    --grey-head:#7B7979;    /* the grey used in the book's own table headers */
+    --table-border:#111111; /* the near-black used for the book's table borders */
+  }
+  * { box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height:1.5;
+    min-width: 1500px; /* desktop-only, intentionally not responsive */
+  }
+  .mono{ font-family: ui-monospace, "SF Mono", "IBM Plex Mono", Menlo, Consolas, monospace; }
+
+  /* ===== left sidebar + tabs ===== */
+  .app-shell{ display:flex; align-items:flex-start; }
+  .sidebar{
+    width:270px; flex-shrink:0; height:100vh; position:sticky; top:0; overflow-y:auto;
+    background:var(--paper-dim); border-right:3px solid var(--ink); padding:24px 18px 40px;
+  }
+  .brand{ font-family: Georgia, serif; font-weight:700; font-size:18px; color:var(--ink); margin-bottom:4px; }
+  .brand .lime{ color:#93b616; }
+  .brand small{ display:block; font-family: ui-monospace, monospace; font-size:10.5px; font-weight:400; color:#5c6b62; margin-top:4px; text-transform:uppercase; letter-spacing:.05em; }
+  .reset-all-btn{
+    font-family: ui-monospace, monospace; font-size:11px; background:var(--ink); color:#fff; border:none;
+    border-radius:5px; padding:9px 12px; cursor:pointer; width:100%; margin:16px 0 18px;
+  }
+  .reset-all-btn:hover{ background:#0f2a5c; }
+  .tabbar{ display:flex; flex-direction:column; gap:6px; }
+  .tab-btn{
+    font-family: ui-monospace, monospace; font-size:11.5px; padding:10px 12px; text-align:left;
+    background:white; border:2px solid var(--ink); border-radius:6px;
+    cursor:pointer; color:var(--ink); width:100%;
+  }
+  .tab-btn.active{ background:var(--ink); color:var(--accent-dim); font-weight:600; }
+  .tab-btn:hover:not(.active){ background:#e6e6e6; }
+
+  .content-area{ flex:1; min-width:0; }
+
+  .page-section{ display:none; }
+  .page-section.active{ display:block; }
+
+  .page{ max-width: 1080px; margin:0 auto; padding: 40px 40px 120px; }
+
+  /* header */
+  .kicker{
+    font-family: ui-monospace, monospace;
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:#5c6b62; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:26px;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  h1.hero{
+    font-family: Georgia, "Iowan Old Style", serif;
+    font-weight:600;
+    font-size: 44px;
+    line-height:1.15;
+    letter-spacing:-0.01em;
+    margin: 0 0 14px;
+  }
+  h1.hero.small{ font-size:34px; }
+  .hero-sub{ font-size:16px; color:#3c4a42; max-width:68ch; margin-bottom: 34px;}
+  .hero-sub b{ color:var(--ink); }
+
+  /* the flip — one line formula, notes below */
+  .flip{ display:flex; flex-direction:column; gap:10px; margin: 26px 0 44px; }
+  .flip-row{ padding:16px 20px; border-radius:6px; }
+  .flip-row.old{ background:#efe6e2; }
+  .flip-row.new{ background:var(--ink); }
+  .formula-tag{
+    display:block;
+    font-family: ui-monospace, monospace; font-size:10px; text-transform:uppercase; letter-spacing:.06em;
+    text-decoration:none !important; opacity:.7; margin-bottom:8px;
+  }
+  .formula-line{
+    font-family: ui-monospace, monospace; font-size:17px; white-space:nowrap;
+    display:block;
+  }
+  .flip-row.old .formula-tag{ color:#7a4a41; }
+  .flip-row.old .formula-line{ color:#7a4a41; text-decoration: line-through; text-decoration-color:#a8433a99; }
+  .flip-row.new .formula-tag{ color:var(--accent-dim); }
+  .flip-row.new .formula-line{ color:var(--accent-dim); font-weight:600; }
+  .formula-note{ font-family: ui-monospace, monospace; font-size:12.5px; margin-top:8px; opacity:.75; }
+  .flip-row.old .formula-note{ color:#7a4a41; }
+  .flip-row.new .formula-note{ color:var(--accent-dim); }
+
+  /* comic-panel cards */
+  .panel{
+    position:relative;
+    background:white;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+    box-shadow: 9px 9px 0 var(--ink);
+    padding: 34px 34px 30px;
+    margin: 0 0 64px;
+  }
+  .panel-tab{
+    position:absolute; top:-18px; left:28px;
+    background:var(--ink); color:var(--accent-dim);
+    font-family: ui-monospace, monospace; font-size:12px; font-weight:600;
+    letter-spacing:.04em; text-transform:uppercase;
+    padding:6px 14px; border-radius:5px;
+    transform: rotate(-1.2deg);
+    box-shadow: 3px 3px 0 rgba(20,32,27,0.25);
+  }
+  h2{ font-family: Georgia, serif; font-weight:600; font-size:25px; margin:6px 0 8px; }
+  .section-desc{ color:#3c4a42; font-size:14.5px; max-width: 70ch; margin: 0 0 24px; }
+
+  /* input card contents */
+  .input-grid{ display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:18px; }
+  .field label{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#5c6b62; margin-bottom:6px; font-family:ui-monospace,monospace; }
+  .field .input-wrap{ position:relative; }
+  .field .input-wrap span{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#8a968f; font-size:15px; }
+  .field input{
+    width:100%; padding:10px 12px; font-size:16px; border:1px solid var(--line);
+    border-radius:6px; background:var(--paper-dim); color:var(--ink); font-family: ui-monospace, monospace;
+  }
+  .field input.with-dollar{ padding-left:26px; }
+  .field input:focus{ outline:2px solid var(--accent); outline-offset:1px; background:white; }
+
+  .real-rev-out{
+    margin-top:22px; padding-top:18px; border-top:1px dashed var(--line);
+    font-size:14px; color:#3c4a42;
+  }
+  .real-rev-out b{ font-family:ui-monospace,monospace; color:var(--ink); font-size:17px; }
+  .save-note{ font-size:12px; color:#8a968f; font-family:ui-monospace,monospace; margin-top:10px; }
+
+  /* TAP table — reproduced in the book's own style: grey header, black rule, letter-coded bands */
+  .tap-table-wrap{ border:2px solid var(--table-border); margin-bottom:14px; }
+  table.tap-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.tap-table th{
+    text-align:center; font-family: ui-sans-serif, sans-serif; font-size:13px; font-weight:700;
+    color:#ffffff; background:var(--grey-head); padding:10px 8px; border:1px solid var(--table-border);
+  }
+  table.tap-table th:first-child{ background:var(--grey-head); }
+  table.tap-table td{
+    padding:11px 10px; border:1px solid var(--table-border); font-family: ui-sans-serif, sans-serif;
+    text-align:center; background:#fff;
+  }
+  table.tap-table td.rowlabel{ text-align:left; font-weight:700; background:#fafafa; }
+  table.tap-table th.active-col, table.tap-table td.active-col{ background:var(--accent-dim); }
+  table.tap-table td.active-col{ font-weight:800; }
+  .tap-caption{ font-family: Georgia, serif; font-weight:600; font-size:13.5px; text-align:center; padding:10px 0 18px; color:var(--ink); }
+
+  .band-note{
+    font-size:13px; color:#5c6b62; margin: 0 0 20px; padding:10px 14px; background:var(--paper-dim);
+    border-radius:6px; border-left:3px solid var(--accent);
+  }
+  .subhead{ font-family: ui-monospace, monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#5c6b62; margin: 0 0 12px; }
+
+  /* allocation bars */
+  .alloc-row{ margin-bottom: 16px; }
+  .alloc-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .alloc-name{ font-size:14px; font-weight:600; }
+  .alloc-figs{ font-family:ui-monospace,monospace; font-size:13px; color:#3c4a42; }
+  .alloc-figs .amt{ color:var(--ink); font-weight:600; }
+  .bar-track{ height:22px; background:var(--paper-dim); border-radius:4px; overflow:hidden; border:1px solid var(--line); }
+  .bar-fill{ height:100%; background:var(--ink); }
+  .bar-fill.accent{ background:var(--accent); }
+  .bar-fill.override{ background:#8b5cf6; }
+
+  .override-cell{ display:flex; align-items:center; gap:6px; }
+  .override-cell label{ font-family:ui-monospace,monospace; font-size:10px; text-transform:uppercase; color:#8a968f; }
+  .override-input{
+    width:56px; padding:5px 6px; font-family:ui-monospace,monospace; font-size:13px; text-align:right;
+    border:1.5px solid var(--line); border-radius:5px; background:var(--paper-dim); color:var(--ink);
+  }
+  .override-input:focus{ outline:2px solid #8b5cf6; outline-offset:1px; background:white; }
+  .override-input.filled{ border-color:#8b5cf6; background:#f4f0ff; }
+  .target-ref{ font-family:ui-monospace,monospace; font-size:11px; color:#8a968f; }
+  .override-status{
+    margin-top:14px; padding:12px 16px; border-radius:6px; font-family:ui-monospace,monospace; font-size:13px;
+  }
+  .override-status.info{ background:var(--paper-dim); color:#5c6b62; }
+  .override-status.remaining{ background:#f4f0ff; color:#5b21b6; border-left:3px solid #8b5cf6; }
+  .override-status.over{ background:#fdf3f2; color:var(--red); border-left:3px solid var(--red); }
+  .override-status.active{ background:#f4f0ff; color:#5b21b6; border-left:3px solid #8b5cf6; font-weight:600; }
+
+  /* narrative callouts */
+  .callout{
+    font-size:15.5px; color:#28362f; background:var(--paper-dim); border:1px solid var(--line);
+    border-radius:8px; padding:18px 20px; margin: 0 0 16px;
+  }
+  .callout:last-child{ margin-bottom:0; }
+  .callout .num{ font-weight:700; color:var(--ink); font-family: ui-monospace, monospace; background: var(--accent-dim); padding:1px 6px; border-radius:3px; }
+
+  /* quarterly + owner draws */
+  .quarter-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap:12px; margin-bottom: 28px; }
+  .qcard{ background:var(--paper-dim); border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center; }
+  .qcard .qlabel{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:#5c6b62; font-family:ui-monospace,monospace; }
+  .qcard .qval{ font-family:ui-monospace,monospace; font-size:19px; font-weight:700; margin-top:6px; }
+
+  .draw-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .draw-table th{ text-align:left; font-family:ui-monospace,monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:#5c6b62; padding:8px 10px; border-bottom:2px solid var(--ink); }
+  .draw-table td{ padding:10px; border-bottom:1px solid var(--line); font-family:ui-monospace,monospace; }
+  .draw-table td.owner-name{ font-family:ui-sans-serif,sans-serif; font-weight:600; }
+
+  footer{ margin-top:20px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:#7a8580; font-family:ui-monospace,monospace; }
+
+  .reset-btn{
+    font-family: ui-monospace, monospace; font-size:12px; background:none; border:1px solid var(--line);
+    border-radius:5px; padding:6px 11px; cursor:pointer; color:#3c4a42;
+  }
+    /* ===== per-chapter signature components ===== */
+
+  /* Ch1: Survival Trap diagram */
+  .trap-wrap{ position:relative; width:100%; max-width:820px; height:520px; margin:20px auto 10px; }
+  .trap-hub{
+    position:absolute; top:50%; left:26%; transform:translate(-50%,-50%);
+    width:120px; height:120px; border-radius:50%; border:3px solid var(--ink);
+    background:#efe6e2; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:Georgia,serif; font-weight:700; font-size:13px; color:#7a4a41; text-align:center; z-index:3;
+  }
+  .trap-vision{
+    position:absolute; top:50%; left:82%; transform:translate(-50%,-50%);
+    width:120px; height:120px; border-radius:50%; border:3px solid var(--ink);
+    background:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:Georgia,serif; font-weight:700; font-size:13px; color:var(--accent-dim); text-align:center; z-index:3;
+  }
+  .trap-arrow{ position:absolute; top:50%; left:35%; width:38%; height:3px; background:var(--ink); transform:translateY(-50%); z-index:1;}
+  .trap-arrow::after{ content:''; position:absolute; right:-2px; top:50%; transform:translateY(-50%); border:7px solid transparent; border-left-color:var(--ink);}
+  .trap-spoke{
+    position:absolute; width:190px; padding:10px 12px; background:white; border:2px solid var(--table-border);
+    border-radius:8px; font-size:12px; line-height:1.4; text-align:center; z-index:2; box-shadow:3px 3px 0 rgba(20,32,27,0.12);
+  }
+
+  /* Ch2: numbered principle cards */
+  .principle-row{ display:grid; grid-template-columns: repeat(4,1fr); gap:14px; margin:8px 0 6px; }
+  .principle-card{ background:var(--paper-dim); border:2px solid var(--ink); border-radius:10px; padding:18px 16px; }
+  .principle-card .pnum{ font-family:Georgia,serif; font-size:26px; font-weight:700; color:var(--accent); }
+  .principle-card h3{ font-size:14.5px; margin:6px 0 6px; }
+  .principle-card p{ font-size:12.5px; color:#3c4a42; margin:0; line-height:1.5; }
+
+  /* Ch3: assessment reveal table */
+  .assess-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .assess-table th{ background:var(--grey-head); color:#fff; padding:9px 8px; font-size:11px; text-transform:uppercase; border:1px solid var(--table-border); }
+  .assess-table td{ padding:10px 8px; border:1px solid var(--table-border); text-align:center; font-family:ui-monospace,monospace; }
+  .assess-table td.rowlabel{ text-align:left; font-family:ui-sans-serif,sans-serif; font-weight:700; background:#fafafa; }
+  .assess-table td.hatch{ background: repeating-linear-gradient(45deg, #f2f2f2, #f2f2f2 4px, #e2e2e2 4px, #e2e2e2 8px); }
+  .assess-editable{ width:80%; border:1px solid var(--line); border-radius:4px; padding:4px 6px; font-family:ui-monospace,monospace; text-align:center; }
+
+  /* Ch4: choice cards */
+  .choice-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:8px; }
+  .choice-card{
+    background:white; border:2px solid var(--ink); border-radius:10px; padding:18px; cursor:pointer;
+    transition:transform .12s ease; text-align:left;
+  }
+  .choice-card:hover{ transform:translateY(-3px); box-shadow:4px 4px 0 var(--ink); }
+  .choice-card.selected{ background:var(--ink); color:var(--accent-dim); }
+  .choice-card h3{ font-size:15px; margin:0 0 6px; font-family:Georgia,serif; }
+  .choice-card p{ font-size:12.5px; margin:0; line-height:1.5; opacity:.85; }
+  .choice-reveal{ background:var(--paper-dim); border-left:3px solid var(--accent); border-radius:6px; padding:16px 18px; font-size:14.5px; margin-top:6px; min-height:60px; }
+
+  /* Ch5/Ch10: timeline */
+  .timeline{ position:relative; padding-left:28px; margin-top:10px; }
+  .timeline::before{ content:''; position:absolute; left:9px; top:6px; bottom:6px; width:3px; background:var(--ink); }
+  .tl-item{ position:relative; margin-bottom:26px; }
+  .tl-item:last-child{ margin-bottom:0; }
+  .tl-dot{ position:absolute; left:-28px; top:2px; width:20px; height:20px; border-radius:50%; background:var(--accent-dim); border:3px solid var(--ink); }
+  .tl-item h3{ font-family:Georgia,serif; font-size:16px; margin:0 0 6px; }
+  .tl-item p{ font-size:14px; color:#3c4a42; margin:0; line-height:1.55; }
+
+  /* Ch6: debt snowball */
+  .snow-row{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+  .snow-ball{ border-radius:50%; background:var(--ink); flex-shrink:0; }
+  .snow-label{ font-size:13.5px; color:#28362f; }
+  .snow-label b{ color:var(--ink); }
+
+  /* Ch7/Ch11: checklist / warning cards */
+  .check-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  .check-card{ border:2px solid var(--ink); border-radius:10px; padding:16px 18px; background:white; }
+  .check-card.warn{ border-color:var(--red); background:#fdf3f2; }
+  .check-card .cc-icon{ font-size:18px; margin-bottom:6px; }
+  .check-card h3{ font-size:14.5px; margin:0 0 6px; font-family:Georgia,serif; }
+  .check-card.warn h3{ color:var(--red); }
+  .check-card p{ font-size:13px; color:#3c4a42; margin:0; line-height:1.5; }
+
+  /* Ch8: habit calendar */
+  .cal-grid{ display:grid; grid-template-columns:repeat(10,1fr); gap:5px; margin-top:6px; }
+  .cal-cell{ aspect-ratio:1; border-radius:4px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:ui-monospace,monospace; font-size:9px; color:#8a968f; }
+  .cal-cell.hit{ background:var(--accent-dim); border-color:var(--ink); color:var(--ink); font-weight:700; }
+  .cal-cell.miss{ background:#fdf3f2; border-color:var(--red); color:var(--red); }
+
+  /* Ch9: technique cards */
+  .tech-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .tech-card{ border:2px solid var(--ink); border-radius:10px; padding:18px 20px; background:white; position:relative; }
+  .tech-card .tech-num{ position:absolute; top:-14px; left:16px; background:var(--ink); color:var(--accent-dim); font-family:ui-monospace,monospace; font-size:11px; padding:3px 10px; border-radius:5px; }
+  .tech-card h3{ font-family:Georgia,serif; font-size:16px; margin:10px 0 8px; }
+  .tech-card .tech-row{ font-size:12.5px; margin-bottom:6px; line-height:1.5; }
+  .tech-card .tech-row b{ font-family:ui-monospace,monospace; font-size:10.5px; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:2px; }
+
+  /* Ch12: vision recap */
+  .vision-compare{ display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:center; margin:10px 0; }
+  .vision-col{ border:2px solid var(--ink); border-radius:10px; padding:20px; }
+  .vision-col.before{ background:#efe6e2; }
+  .vision-col.after{ background:var(--ink); color:var(--accent-dim); }
+  .vision-col h3{ font-family:Georgia,serif; font-size:15px; margin:0 0 10px; }
+  .vision-col ul{ margin:0; padding-left:18px; font-size:13px; line-height:1.7; }
+  .vision-arrow{ font-size:26px; color:var(--accent); }
+
+  .chapter-source-note{ font-family:ui-monospace,monospace; font-size:11px; color:#8a968f; margin-top:10px; }
+
+  /* shared chapter typography, reused across templates */
+  .chapter-tagline{
+    font-family: Georgia, serif; font-style:italic; font-size:19px; color:var(--ink);
+    max-width:64ch; margin:0 0 30px; padding-left:18px; border-left:3px solid var(--accent-dim);
+  }
+  .concept-list{ list-style:none; padding:0; margin:0; }
+  .concept-list li{
+    padding:14px 0; border-bottom:1px solid var(--line); font-size:15px; color:#28362f; line-height:1.5;
+  }
+  .concept-list li:last-child{ border-bottom:none; padding-bottom:0; }
+  .concept-list li b{ color:var(--ink); }
+  .takeaway-box{
+    background:var(--ink); color:var(--accent-dim); border-radius:8px; padding:20px 22px; font-size:15px;
+  }
+  .takeaway-box b{ color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <nav class="sidebar">
+    <div class="brand">PROFIT <span class="lime">FIR$T</span><small>Interactive Guide</small></div>
+    <button class="reset-all-btn" onclick="resetAllData()">⟲ Reset all data (every page)</button>
+    <div class="tabbar" id="tabbar"></div>
+  </nav>
+  <main class="content-area">
+
+<!-- ============ OVERVIEW ============ -->
+<section id="page-overview" class="page-section">
+<div class="page">
+
+  <div class="kicker">
+    <span>Cash Management System · Overview · Desktop layout</span>
+    <button class="reset-btn" onclick="resetOverview()">↺ reset this page</button>
+  </div>
+
+  <h1 class="hero">Profit isn't what's left over.<br>It's what you take first.</h1>
+  <p class="hero-sub">Based on <b>Profit First</b> by Mike Michalowicz. Type your own revenue and costs below — every number on this page, including the book's examples, updates to reflect <b>your</b> business instead of a hypothetical one. Your numbers are saved automatically in this browser.</p>
+
+  <div class="flip">
+    <div class="flip-row old">
+      <div class="formula-tag">Old formula</div>
+      <div class="formula-line">Revenue − Expenses = Profit</div>
+      <div class="formula-note">profit is whatever's left, so it's usually nothing</div>
+    </div>
+    <div class="flip-row new">
+      <div class="formula-tag">Profit First formula</div>
+      <div class="formula-line">Revenue − Profit = Expenses</div>
+      <div class="formula-note">you pay yourself first, expenses shrink to fit what's left</div>
+    </div>
+  </div>
+
+  <!-- SECTION 01: INPUT -->
+  <div class="panel">
+    <div class="panel-tab">01 · Inputs</div>
+    <h2>Plug in your numbers</h2>
+    <p class="section-desc">Profit First works off "Real Revenue" — total revenue minus what you pay subcontractors or materials to deliver the work. For a dev/marketing shop, that's usually contractor and tooling pass-through costs. Also set how many owners split the Owner's Pay account, and how often draws go out.</p>
+
+    <div class="input-grid">
+      <div class="field">
+        <label for="revenue">Annual revenue</label>
+        <div class="input-wrap"><span>$</span><input class="with-dollar" type="number" id="revenue" value="600000" min="0" oninput="onOverviewInput()"></div>
+      </div>
+      <div class="field">
+        <label for="matcost">Materials / subcontractors</label>
+        <div class="input-wrap"><span>$</span><input class="with-dollar" type="number" id="matcost" value="120000" min="0" oninput="onOverviewInput()"></div>
+      </div>
+      <div class="field">
+        <label for="numowners">Number of owners</label>
+        <input type="number" id="numowners" value="4" min="1" oninput="onOverviewInput()">
+      </div>
+      <div class="field">
+        <label for="drawspermonth">Owner draws / month</label>
+        <input type="number" id="drawspermonth" value="2" min="1" oninput="onOverviewInput()">
+      </div>
+    </div>
+
+    <div class="real-rev-out">Real Revenue &nbsp;=&nbsp; <b id="realrev-out">$0</b> &nbsp;<span style="color:#8a968f">(this is the number every allocation below is based on)</span></div>
+    <div class="save-note">◆ saved automatically to this browser — use "reset this page" above to clear just these numbers, or "reset all data" up top to wipe every page</div>
+  </div>
+
+  <!-- SECTION 02: TAPS -->
+  <div class="panel">
+    <div class="panel-tab">02 · Target allocation</div>
+    <h2>The Profit First percentage table</h2>
+    <p class="section-desc">The book publishes Target Allocation Percentages (TAPs) by revenue band — the mix a healthy business at your size is aiming for. Your row is highlighted below.</p>
+
+    <div class="subhead">Figure 4 — Target Allocation Percentages (TAPs), from the book</div>
+    <div class="tap-table-wrap">
+      <table class="tap-table" id="tap-table"></table>
+    </div>
+    <div class="tap-caption">Your revenue lands in the highlighted column</div>
+
+    <div class="subhead">Your numbers, applied</div>
+    <div class="band-note" id="band-note">Revenue band: —</div>
+    <div id="tap-alloc"></div>
+    <div class="override-status" id="override-status"></div>
+  </div>
+
+  <!-- SECTION 03: NARRATIVE CALLOUTS -->
+  <div class="panel">
+    <div class="panel-tab">03 · What this means</div>
+    <h2>What this means, in plain terms</h2>
+    <div class="callout" id="callout-profit">
+      At the target rate, this business sets aside <span class="num" id="c-profit-amt">$0</span> in profit per year — before a single bill gets paid.
+    </div>
+    <div class="callout" id="callout-owner">
+      The owner's pay account targets <span class="num" id="c-owner-amt">$0</span> a year (<span class="num" id="c-owner-pct">0%</span> of Real Revenue). Split <span class="num" id="c-numowners">4</span> ways, that's <span class="num" id="c-owner-each-yr">$0</span> per owner per year — or <span class="num" id="c-owner-each-draw">$0</span> per owner on each draw.
+    </div>
+    <div class="callout" id="callout-opex">
+      That leaves <span class="num" id="c-opex-amt">$0</span> to run the entire operation — payroll, tools, ads, everything. Parkinson's Law says the team will find a way to fit inside it.
+    </div>
+  </div>
+
+  <!-- SECTION 04: QUARTERLY + OWNER DRAWS -->
+  <div class="panel">
+    <div class="panel-tab">04 · Distributions</div>
+    <h2>Quarterly profit &amp; owner draws</h2>
+    <p class="section-desc">Every quarter, half the Profit Account balance gets distributed to the owners as a reward; the rest stays as a cushion. Owner's Pay is drawn on a fixed schedule instead — here's both, split across <span id="draws-count-label">4</span> owners.</p>
+
+    <div class="quarter-grid">
+      <div class="qcard"><div class="qlabel">Profit / quarter</div><div class="qval" id="q-profit">$0</div></div>
+      <div class="qcard"><div class="qlabel">Owner distribution</div><div class="qval" id="q-dist">$0</div></div>
+      <div class="qcard"><div class="qlabel">Stays in account</div><div class="qval" id="q-stay">$0</div></div>
+      <div class="qcard"><div class="qlabel">Profit dist. / owner</div><div class="qval" id="q-dist-each">$0</div></div>
+    </div>
+
+    <div class="subhead" id="draw-schedule-label">Owner's pay draw schedule — 4 owners, 2× / month (24 draws / year)</div>
+    <table class="draw-table">
+      <thead><tr><th>Per owner, per year</th><th>Per owner, per draw</th><th>Total owner pay / year</th><th>Draws / year</th></tr></thead>
+      <tbody>
+        <tr>
+          <td id="d-owner-yr">$0</td>
+          <td id="d-owner-draw">$0</td>
+          <td id="d-owner-total">$0</td>
+          <td id="d-draws-yr">24</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>profit_first.html · numbers recalc live · saved locally in this browser only, nothing is sent anywhere</footer>
+</div>
+</section>
+
+<!-- ============ CHAPTER STUBS ============ -->
+<div id="chapter-stubs"></div>
+
+  </main>
+</div>
+
+<script>
+// ===================================================================
+// CHAPTER REGISTRY (real table of contents + paraphrased summaries)
+// Note: content is paraphrased in Claude's own words, not excerpted
+// from the book — see copyright note in chat.
+// ===================================================================
+const CHAPTERS = [
+  { id:"overview", label:"Overview" },
+  { id:"ch1", label:"Ch 1 · Taming The Beast", type:"diagram" },
+  { id:"ch2", label:"Ch 2 · How Profit First Works", type:"steps" },
+  { id:"ch3", label:"Ch 3 · The Naked Truth", type:"assessment" },
+  { id:"ch4", label:"Ch 4 · Choose Your Own Adventure", type:"choice" },
+  { id:"ch5", label:"Ch 5 · Day One, Quarter One, Year One and Forever", type:"timeline" },
+  { id:"ch6", label:"Ch 6 · Destroying Debt", type:"snowball" },
+  { id:"ch7", label:"Ch 7 · Found Money", type:"checklist" },
+  { id:"ch8", label:"Ch 8 · Sticking With It", type:"habit" },
+  { id:"ch9", label:"Ch 9 · Advanced Techniques", type:"techcards" },
+  { id:"ch10", label:"Ch 10 · Living Profit First", type:"timeline" },
+  { id:"ch11", label:"Ch 11 · Where It All Falls Apart", type:"checklist" },
+  { id:"ch12", label:"Ch 12 · Financial Freedom Is Just a Few Clicks Away", type:"vision" },
+];
+
+// Per-chapter content, paraphrased in Claude's own words — see copyright note in chat.
+const CH_CONTENT = {
+  ch1: {
+    tagline: "Every entrepreneur starts out building a dream. Most end up feeding a monster instead.",
+    intro: "You didn't start this business to spend every Sunday night doing math in your head, guessing whether Tuesday's payroll clears. But here you are. Michalowicz's answer isn't \u201Cwork harder\u201D or \u201Csell more\u201D \u2014 it's that the whole chase is aimed at the wrong target.",
+    trapCenter: "POINT A<br>Crisis",
+    trapVision: "POINT B<br>Vision",
+    trapSpokes: [
+      "Take on a client who's wrong for you, just to cover this month's payroll",
+      "Throw every ounce of energy at sales to get fast money in the door",
+      "Launch a new offer overnight because it might generate quick revenue",
+      "Do the work yourself at 11pm because it's \u201Cfree\u201D and no one else can",
+      "Run a last-minute discount or promotion to force some cash in",
+      "Hire an expert on credit to instantly expand what you offer"
+    ],
+    trapCaption: "The Survival Trap — recreated from Figure 1. Every arrow points away from Point B.",
+    closer: "Nothing on that wheel is stupid in isolation. Any one of those moves might even work, once. The problem is a business run entirely by that wheel never arrives anywhere \u2014 it just spins, crisis to crisis. Profit First is the thing that turns the wheel into a straight line.",
+    takeaway: "Two things happen before a single account gets opened: you decide, on purpose, that this business is going to be profitable \u2014 and you stop punishing yourself for the mistakes that got you here." },
+
+  ch2: {
+    tagline: "You already know how to fix this. You've just never applied it to money.",
+    intro: "Michalowicz didn't discover this idea in an accounting textbook. He found it watching a nutritionist explain why diets fail: nobody out-wills a full plate. You don't need more discipline. You need a smaller plate.",
+    formula: { old: "Revenue \u2212 Expenses = Profit", oldNote: "profit is whatever survives to the end \u2014 usually nothing", nu: "Revenue \u2212 Profit = Expenses", nuNote: "profit is removed on day one, expenses shrink to fit what's left" },
+    principles: [
+      { n:"01", h:"Use Small Plates", p:"Split incoming cash across several accounts the moment it lands. A dollar sitting in a labeled \u201COperating Expenses\u201D account gets spent differently than a dollar sitting in one big pool." },
+      { n:"02", h:"Serve Sequentially", p:"Profit and Owner's Pay get moved first, on a fixed schedule \u2014 before a single bill gets paid. Expenses eat whatever's left, not the other way around." },
+      { n:"03", h:"Remove Temptation", p:"The Profit and Tax accounts live at a separate bank, deliberately harder to peek at or transfer from. Out of sight really does mean out of impulse." },
+      { n:"04", h:"Enforce a Rhythm", p:"A fixed schedule for moving and paying money \u2014 not \u201Cwhen I get around to it.\u201D Consistency is what makes the other three principles stick." }
+    ],
+    takeaway: "This is the exact mechanism running the calculator on the Overview page \u2014 smaller, harder-to-reach accounts instead of one shared pool." },
+
+  ch3: {
+    tagline: "Revenue tells you how big you are. It says nothing about whether you're actually okay.",
+    intro: "Entrepreneurs love to talk in top-line numbers \u2014 \u201Cwe did $2M last year\u201D \u2014 because it sounds impressive. It also hides the truth. A business can post record revenue and still be one bad month from collapse. The Instant Assessment strips that away and asks a blunter question: as a percentage of what you actually keep, where is your money going right now?",
+    assessRows: ["Top Line Revenue","Material & Subs","Real Revenue","Profit","Owner's Pay","Tax","Operating Expenses"],
+    assessCols: ["Actual","PF %","PF $","The Bleed","The Fix"],
+    closer: "Most people feel a jolt the first time they run this \u2014 seeing in black and white that \u201COperating Expenses\u201D is quietly eating 95 cents of every real dollar. That jolt is the point. You can't fix a leak you've never measured.",
+    takeaway: "Even a brand-new company benefits from running this once revenue starts \u2014 it's far easier to start healthy than to unwind bad habits two years in." },
+
+  ch4: {
+    tagline: "There's no single correct starting number. There's just a direction to start moving.",
+    intro: "Once the Naked Truth shows you where you stand, the obvious next question is: what should the targets actually be? Michalowicz offers three legitimate paths \u2014 pick one, or blend them. The wrong move is spending three more months \u201Cresearching\u201D instead of picking any of them.",
+    choices: [
+      { h:"Look at the market", p:"Pull public company filings or industry benchmarks in your space and use their healthy ratios as a rough target.", reveal:"Best if you're in an industry with clear public comparables (retail, professional services, SaaS). Weakest if your business is genuinely unusual \u2014 industry averages assume you look like everyone else." },
+      { h:"Look at your own best year", p:"Dig through past tax returns and find the year your business ran leanest and most profitably \u2014 use that year's percentages as this year's target.", reveal:"This is the most personal option \u2014 it proves the business is capable of hitting those numbers, because it already has. Only works if you have at least a couple of years of history to mine." },
+      { h:"Use the published bands", p:"Use the revenue-size TAP table from the book (the same one on the Overview page) as a generic starting point.", reveal:"The fastest option, and the right default for a brand-new company with no history yet. Least tailored to your specific business model." }
+    ],
+    takeaway: "TAPs are a direction to move toward gradually \u2014 not a number the business is expected to hit this quarter." },
+
+  ch5: {
+    tagline: "The system doesn't run on motivation. It runs on a calendar.",
+    intro: "This is the least glamorous chapter and the most important one \u2014 it's the actual setup checklist, and the rhythm that keeps the whole thing alive long after the initial excitement wears off.",
+    timeline: [
+      { h:"Day One", p:"Open the accounts. Tell your accountant what you're doing and why. Move a first deposit into Profit \u2014 even 1% is enough to start the habit." },
+      { h:"The 10/25 Rhythm", p:"Twice a month, on fixed dates, income gets allocated across every account and bills get paid from Operating Expenses. Not \u201Cwhen there's time\u201D \u2014 the 10th and the 25th, every time." },
+      { h:"Quarter One", p:"At the end of the first quarter, half of whatever sits in the Profit account gets paid out to the owners as a reward. The other half stays as a cushion." },
+      { h:"Year One", p:"True up with your accountant, see how the year actually went against your TAPs, and adjust the targets for year two." },
+      { h:"Forever", p:"Repeat the rhythm. The targets get revisited periodically, but the cadence itself never stops." }
+    ],
+    takeaway: "This is exactly where the Overview page's owner-draw math comes from \u2014 the 10/25 rhythm and quarterly distribution are the book's actual operating cadence, not an abstraction." },
+
+  ch6: {
+    tagline: "You can dig out of debt without giving up the habit that's fixing everything else.",
+    intro: "The instinct when debt is heavy is to throw every spare dollar at it and let profit-taking wait \u201Cuntil things are better.\u201D Michalowicz pushes back \u2014 things rarely get better by accident, and a business that abandons the profit habit under pressure usually never picks it back up.",
+    snowballIntro: "The method is the classic debt snowball, run alongside a (smaller) Profit account instead of instead of one:",
+    snowballSteps: [
+      { size:34, label:"Pay minimums on every debt \u2014 nothing gets neglected" },
+      { size:50, label:"Throw every extra dollar at the smallest balance first" },
+      { size:68, label:"Close it. Feel that win. Roll its whole payment into the next-smallest balance" },
+      { size:88, label:"Repeat \u2014 each payoff snowballs into a bigger attack on the next one" }
+    ],
+    closer: "Mathematically, attacking the highest-interest debt first saves more money. Psychologically, closing accounts \u2014 any accounts \u2014 is what keeps a person going. Michalowicz bets on psychology, and the book argues that's the correct bet for most people.",
+    takeaway: "Debt payoff and Profit First aren't positioned as either/or \u2014 a token profit allocation stays alive even while a business is digging out." },
+
+  ch7: {
+    tagline: "The fastest new dollar isn't a new client. It's a leak you haven't found yet.",
+    intro: "Before ramping up sales effort, Michalowicz sends readers hunting inside the business first \u2014 competitors will always chase your margins down over time, so operational waste is often the bigger, faster lever.",
+    checklist: [
+      { h:"Audit your vendors", p:"Contracts and subscriptions renew quietly for years past the point anyone's checking if they're still worth it." },
+      { h:"Re-price the unprofitable work", p:"Not every client or product deserves the same rate \u2014 some are quietly subsidized by the profitable ones." },
+      { h:"Chase efficiency before sales", p:"A study cited in the book found real profitability usually comes from operations, not the sales team \u2014 like water pulled from underground, not rainfall." },
+      { h:"Expect the profit squeeze", p:"Competitors will always chase your prices down over time. Relying on price alone to hold margin is a strategy with a shrinking shelf life." }
+    ],
+    takeaway: "\u201CFound money\u201D means cash the business already generates but currently leaks \u2014 not money that has to be won from a brand-new client." },
+
+  ch8: {
+    tagline: "The system doesn't fail all at once. It fails one skipped Tuesday at a time.",
+    intro: "Every diet analogy in this book eventually comes back to the same truth: consistency beats intensity. Missing one 10/25 deposit \u201Cjust this once\u201D feels harmless. It's exactly how the whole habit quietly unravels.",
+    calendarNote: "A simulated two-month view of the 10/25 rhythm \u2014 green marks a deposit day that actually happened, red marks one that got skipped:",
+    takeaway: "Consistency compounds the same way debt or savings does \u2014 a missed deposit here and there is what actually breaks the system, not one bad quarter." },
+
+  ch9: {
+    tagline: "Once the core habit is running, these are the refinements that make it yours.",
+    intro: "This chapter is a toolbox, not a checklist \u2014 pick the tactics that solve a problem you actually have. Here are the five Michalowicz names directly.",
+    techs: [
+      { n:"01", h:"The Government's Money", what:"Rename the Tax account something like \u201CGovernment's Money \u2014 Do Not Touch\u201D at the bank level.", why:"A dollar mentally labeled as someone else's money is far harder to justify \u201Cborrowing\u201D from during a cash crunch.", how:"Most banks let you rename accounts for free. It takes five minutes and changes nothing structurally \u2014 which is exactly the point." },
+      { n:"02", h:"Hide Accounts", what:"Use your bank's settings to hide the Profit and Tax accounts from the default view when you log in.", why:"Willpower is finite. If you never see the balance, you're never tempted mid-scroll to move it somewhere else.", how:"Look for an \u201Cinactive\u201D or \u201Chidden accounts\u201D toggle in online banking, or open the reserve accounts at a second bank entirely." },
+      { n:"03", h:"Outside Income Accounts", what:"If money comes in through side channels \u2014 a marketplace, a payment processor, a secondary brand \u2014 sweep it into the main Income account on a schedule.", why:"Money that never touches the core system never gets allocated, which quietly defeats the entire method.", how:"Set a recurring calendar reminder (or an automated transfer, if your processor supports it) tied to the 10/25 rhythm." },
+      { n:"04", h:"Account Snapshot", what:"Set up low-balance and deposit alerts on every account in the system.", why:"A surprise is the enemy of a rhythm-based system \u2014 alerts turn \u201Cwait, when did that happen\u201D into \u201Cnoted, handled.\u201D", how:"Every major bank supports text or email alerts on balance thresholds \u2014 this is usually a five-minute setup per account." },
+      { n:"05", h:"Bank Checks", what:"For larger or less-routine payments, use physical bank checks instead of instant transfers.", why:"The slight friction and delay of a check creates a natural pause \u2014 a moment to reconsider \u2014 that an instant tap-to-pay doesn't.", how:"Reserve this for the payments large enough that a day's delay is a feature, not a bug \u2014 not every vendor invoice needs this treatment." }
+    ],
+    takeaway: "Probably the most relevant chapter to build out further, given the 4-owner structure already on the Overview page \u2014 several of these tactics (especially Outside Income Accounts) get more interesting with multiple owners pulling from the same accounts." },
+
+  ch10: {
+    tagline: "The goal is for this to stop feeling like a system and start feeling like just how the business runs.",
+    intro: "Everything up to this point is installation. This chapter is about maintenance \u2014 what it looks like once Profit First isn't a project anymore, just the water the business swims in.",
+    timeline: [
+      { h:"Revisit TAPs as you grow", p:"A business that moves into a new revenue band should update its targets \u2014 the percentages that made sense at $200K aren't the ones that make sense at $2M." },
+      { h:"Bake it into procedure, not memory", p:"The 10/25 rhythm should live in a shared calendar or SOP, not just in the owner's head \u2014 so it survives vacations, hires, and bad weeks." },
+      { h:"Onboard anyone new to it", p:"Partners, bookkeepers, and new hires who touch money need to understand the system, or they'll quietly work around it." },
+      { h:"Let the accounts make decisions for you", p:"Once it's habitual, \u201Ccan we afford this\u201D stops being a debate \u2014 the Operating Expenses balance already answered it." }
+    ],
+    takeaway: "Once it's habitual, decisions get easier \u2014 the accounts themselves signal what's actually affordable." },
+
+  ch11: {
+    tagline: "Most failures aren't dramatic. They're quiet, and they look reasonable in the moment.",
+    intro: "Michalowicz's warning here is blunt: the system's worst enemy isn't the market, it's the business owner, one small reasonable-sounding exception at a time.",
+    warnings: [
+      { h:"\u201CJust this once\u201D withdrawals", p:"Raiding the Profit or Tax account during a shortfall feels harmless the first time. It rarely stays a one-time thing." },
+      { h:"Operating Expenses creep", p:"Without active guarding, OpEx quietly drifts back toward 100% of revenue \u2014 exactly the problem the system was built to prevent." },
+      { h:"Abandoning ship after one bad month", p:"A single rough quarter gets read as \u201Cproof the system doesn't work,\u201D when it's usually just proof a course-correction is due." },
+      { h:"Going it alone", p:"Owners who skip an accountant or accountability partner lose the outside check that catches slippage early." }
+    ],
+    takeaway: "The fix is almost always the same one from Chapter 8: get back on the 10/25 rhythm immediately, rather than waiting for a \u201Cbetter\u201D month to restart." },
+
+  ch12: {
+    tagline: "This was never really about the business. It was about what the business was supposed to buy you back.",
+    intro: "The closing chapter pulls the lens back out to Chapter 1's Survival Trap \u2014 Point A, crisis, versus Point B, vision. Everything in between was the work of actually getting there.",
+    before: ["Revenue chased for its own sake","Profit as a leftover, if there's any","Owner's pay whatever's left over","Decisions made from panic"],
+    after: ["Profit taken on purpose, every cycle","A business that funds a life outside itself","Owner's pay as a deliberate, protected target","Decisions made from a plan"],
+    takeaway: "This closes the loop back to Chapter 1 \u2014 moving from crisis-mode decisions to a business that actually supports the vision it was built for." },
+};
+
+// ===================================================================
+// TAB RENDERING / NAVIGATION
+// ===================================================================
+let currentPage = localStorage.getItem('profitFirst.currentPage') || 'overview';
+
+function panelWrap(tabLabel, heading, inner){
+  return `<div class="panel"><div class="panel-tab">${tabLabel}</div><h2>${heading}</h2>${inner}</div>`;
+}
+
+function renderDiagramChapter(c){
+  const spokes = c.trapSpokes;
+  const angles = [-70,-35,0,35,70,110]; // rough radial placement around hub, degrees offset for a 6-spoke arc feel
+  // fixed layout positions (hand-placed for legibility rather than pure trig)
+  const positions = [
+    {top:'2%', left:'22%'}, {top:'2%', left:'52%'},
+    {top:'40%', left:'0%'}, {top:'40%', left:'56%'},
+    {top:'78%', left:'8%'}, {top:'78%', left:'50%'}
+  ];
+  const spokeHtml = spokes.map((s,i)=>`<div class="trap-spoke" style="top:${positions[i].top}; left:${positions[i].left};">${s}</div>`).join('');
+  return `
+    <div class="panel">
+      <div class="panel-tab">01 · The story</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+      <div class="trap-wrap">
+        <div class="trap-arrow"></div>
+        <div class="trap-hub">${c.trapCenter}</div>
+        <div class="trap-vision">${c.trapVision}</div>
+        ${spokeHtml}
+      </div>
+      <div class="chapter-source-note" style="text-align:center;">${c.trapCaption}</div>
+    </div>
+    ${panelWrap('02 · What it means','So what do you actually do?', `<p class="section-desc" style="font-size:15px; max-width:72ch;">${c.closer}</p>`)}
+    ${panelWrap('03 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderStepsChapter(c){
+  return `
+    <div class="panel">
+      <div class="panel-tab">02.1 · The insight</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+      <div class="flip" style="margin:20px 0 4px;">
+        <div class="flip-row old"><div class="formula-tag">Old formula</div><div class="formula-line">${c.formula.old}</div><div class="formula-note">${c.formula.oldNote}</div></div>
+        <div class="flip-row new"><div class="formula-tag">Profit First formula</div><div class="formula-line">${c.formula.nu}</div><div class="formula-note">${c.formula.nuNote}</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-tab">02.2 · The four principles</div>
+      <h2>How the flip actually gets enforced</h2>
+      <div class="principle-row">
+        ${c.principles.map(p=>`<div class="principle-card"><div class="pnum">${p.n}</div><h3>${p.h}</h3><p>${p.p}</p></div>`).join('')}
+      </div>
+    </div>
+    ${panelWrap('02.3 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderAssessmentChapter(c){
+  const rows = c.assessRows;
+  const cols = c.assessCols;
+  return `
+    <div class="panel">
+      <div class="panel-tab">03.1 · The reveal</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+    </div>
+    <div class="panel">
+      <div class="panel-tab">03.2 · The Instant Assessment</div>
+      <h2>Figure 3, blank — try it with your own numbers</h2>
+      <div class="tap-table-wrap">
+        <table class="assess-table">
+          <thead><tr><th></th>${cols.map(cl=>`<th>${cl}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${rows.map((r,ri)=>`<tr><td class="rowlabel">${r}</td>${cols.map((cl,ci)=>{
+              const isHatch = (r==='Top Line Revenue'||r==='Material & Subs') && ci<3 || (r==='Real Revenue' && ci>=3);
+              return isHatch ? `<td class="hatch"></td>` : `<td><input class="assess-editable" placeholder="\u2014"></td>`;
+            }).join('')}</tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="chapter-source-note">Recreated from Figure 3, Profit First Assessment Form. Type into any cell \u2014 nothing here saves or calculates, it's for working through by hand or matching against the Overview page's live version.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-tab">03.3 · The gut punch</div>
+      <h2>What people usually find</h2>
+      <p class="section-desc" style="font-size:15px; max-width:72ch;">${c.closer}</p>
+    </div>
+    ${panelWrap('03.4 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderChoiceChapter(c){
+  return `
+    <div class="panel">
+      <div class="panel-tab">04.1 · Pick your path</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+      <div class="choice-row" id="choice-row">
+        ${c.choices.map((ch,i)=>`<div class="choice-card" data-i="${i}" onclick="selectChoice(${i})"><h3>${ch.h}</h3><p>${ch.p}</p></div>`).join('')}
+      </div>
+      <div class="choice-reveal" id="choice-reveal">Click a card above to see the tradeoffs \u2014 there's no wrong pick, but each one fits a different situation.</div>
+    </div>
+    ${panelWrap('04.2 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderTimelineChapter(c, num){
+  return `
+    <div class="panel">
+      <div class="panel-tab">${num}.1 · The rhythm</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+      <div class="timeline">
+        ${c.timeline.map(t=>`<div class="tl-item"><div class="tl-dot"></div><h3>${t.h}</h3><p>${t.p}</p></div>`).join('')}
+      </div>
+    </div>
+    ${panelWrap(num+'.2 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderSnowballChapter(c){
+  return `
+    <div class="panel">
+      <div class="panel-tab">06.1 · The problem</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+    </div>
+    <div class="panel">
+      <div class="panel-tab">06.2 · The snowball</div>
+      <h2>${c.snowballIntro}</h2>
+      ${c.snowballSteps.map(s=>`<div class="snow-row"><div class="snow-ball" style="width:${s.size}px; height:${s.size}px;"></div><div class="snow-label">${s.label}</div></div>`).join('')}
+      <p class="section-desc" style="font-size:14.5px; max-width:72ch; margin-top:10px;">${c.closer}</p>
+    </div>
+    ${panelWrap('06.3 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderChecklistChapter(c, num, warn){
+  const title = warn ? "Warning signs to catch early" : "Where to look first";
+  return `
+    <div class="panel">
+      <div class="panel-tab">${num}.1 · The idea</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+    </div>
+    <div class="panel">
+      <div class="panel-tab">${num}.2 · ${warn ? 'Red flags' : 'Checklist'}</div>
+      <h2>${title}</h2>
+      <div class="check-grid">
+        ${(c.checklist||c.warnings).map(item=>`<div class="check-card ${warn?'warn':''}"><div class="cc-icon">${warn?'\u26A0':'\u2713'}</div><h3>${item.h}</h3><p>${item.p}</p></div>`).join('')}
+      </div>
+    </div>
+    ${panelWrap(num+'.3 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderHabitChapter(c){
+  // build a 2-month 10/25-rhythm calendar strip, deterministic pseudo-pattern (not random each render)
+  const hits = [1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1];
+  const cells = hits.map((h,i)=>`<div class="cal-cell ${h?'hit':'miss'}">${h? (i%2===0?'10th':'25th') : '\u2715'}</div>`).join('');
+  return `
+    <div class="panel">
+      <div class="panel-tab">08.1 · The habit</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+    </div>
+    <div class="panel">
+      <div class="panel-tab">08.2 · The rhythm, visualized</div>
+      <h2>${c.calendarNote}</h2>
+      <div class="cal-grid">${cells}</div>
+      <div class="chapter-source-note">One missed deposit (marked \u2715) rarely sinks anything by itself \u2014 the danger is the second one feeling easier than the first.</div>
+    </div>
+    ${panelWrap('08.3 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderTechCardsChapter(c){
+  return `
+    <div class="panel">
+      <div class="panel-tab">09.1 · The toolbox</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+    </div>
+    <div class="panel">
+      <div class="panel-tab">09.2 · The five techniques</div>
+      <h2>Named tactics, straight from the chapter</h2>
+      <div class="tech-grid">
+        ${c.techs.map(t=>`
+          <div class="tech-card">
+            <div class="tech-num">${t.n}</div>
+            <h3>${t.h}</h3>
+            <div class="tech-row"><b>What it is</b>${t.what}</div>
+            <div class="tech-row"><b>Why it works</b>${t.why}</div>
+            <div class="tech-row"><b>How to set it up</b>${t.how}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    ${panelWrap('09.3 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+function renderVisionChapter(c){
+  return `
+    <div class="panel">
+      <div class="panel-tab">12.1 · Full circle</div>
+      <h2>${c.tagline}</h2>
+      <p class="section-desc" style="font-size:15.5px; max-width:72ch;">${c.intro}</p>
+      <div class="vision-compare">
+        <div class="vision-col before"><h3>Point A \u2014 Crisis</h3><ul>${c.before.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+        <div class="vision-arrow">\u2192</div>
+        <div class="vision-col after"><h3>Point B \u2014 Vision</h3><ul>${c.after.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+      </div>
+    </div>
+    ${panelWrap('12.2 · Takeaway','Why it matters here', `<div class="takeaway-box">${c.takeaway}</div>`)}
+  `;
+}
+
+const RENDERERS = {
+  diagram: renderDiagramChapter,
+  steps: renderStepsChapter,
+  assessment: renderAssessmentChapter,
+  choice: renderChoiceChapter,
+  timeline: renderTimelineChapter,
+  snowball: renderSnowballChapter,
+  checklist: renderChecklistChapter,
+  habit: renderHabitChapter,
+  techcards: renderTechCardsChapter,
+  vision: renderVisionChapter,
+};
+
+function buildChapterPages(){
+  const container = document.getElementById('chapter-stubs');
+  container.innerHTML = CHAPTERS.filter(c => c.id !== 'overview').map((c, idx) => {
+    const num = String(idx + 1).padStart(2,'0');
+    const content = CH_CONTENT[c.id];
+    const warn = c.id === 'ch11';
+    let body;
+    if(c.type === 'timeline') body = renderTimelineChapter(content, num);
+    else if(c.type === 'checklist') body = renderChecklistChapter(content, num, warn);
+    else body = RENDERERS[c.type](content);
+    return `
+    <section id="page-${c.id}" class="page-section">
+      <div class="page">
+        <div class="kicker"><span>Cash Management System · ${c.label}</span></div>
+        <h1 class="hero small">${c.label.split('\u00b7 ')[1]}</h1>
+        ${body}
+      </div>
+    </section>`;
+  }).join('');
+}
+
+function selectChoice(i){
+  const content = CH_CONTENT.ch4;
+  document.querySelectorAll('#choice-row .choice-card').forEach((el,idx)=>{
+    el.classList.toggle('selected', idx===i);
+  });
+  document.getElementById('choice-reveal').textContent = content.choices[i].reveal;
+}
+
+function renderTabs(){
+  document.getElementById('tabbar').innerHTML = CHAPTERS.map(c =>
+    `<button class="tab-btn ${c.id === currentPage ? 'active' : ''}" onclick="showPage('${c.id}')">${c.label}</button>`
+  ).join('');
+}
+
+function showPage(id){
+  currentPage = id;
+  document.querySelectorAll('.page-section').forEach(s => {
+    s.classList.toggle('active', s.id === 'page-' + id);
+  });
+  renderTabs();
+  try{ localStorage.setItem('profitFirst.currentPage', id); }catch(e){}
+  window.scrollTo(0,0);
+}
+
+// ===================================================================
+// OVERVIEW: TAP DATA (Figure 4, reproduced exactly as printed in the book)
+// ===================================================================
+const TAP_BANDS = [
+  { letter:"A", max: 250000,    range:"$0 – $250K",     label: "Under $250K",   profit:5,  owner:50, tax:15, opex:30 },
+  { letter:"B", max: 500000,    range:"$250K – $500K",  label: "$250K – $500K", profit:10, owner:35, tax:15, opex:40 },
+  { letter:"C", max: 1000000,   range:"$500K – $1M",    label: "$500K – $1M",   profit:15, owner:20, tax:15, opex:50 },
+  { letter:"D", max: 5000000,   range:"$1M – $5M",      label: "$1M – $5M",     profit:10, owner:10, tax:15, opex:65 },
+  { letter:"E", max: 10000000,  range:"$5M – $10M",     label: "$5M – $10M",    profit:15, owner:5,  tax:15, opex:65 },
+  { letter:"F", max: 50000000,  range:"$10M – $50M",    label: "$10M – $50M",   profit:20, owner:0,  tax:15, opex:65 },
+];
+
+const OVERVIEW_DEFAULTS = { revenue:600000, matcost:120000, numowners:4, drawspermonth:2 };
+const OVERVIEW_KEY = 'profitFirst.overview.inputs';
+
+function fmt(n){
+  return '$' + Math.round(n).toLocaleString('en-US');
+}
+
+function getBand(realRev){
+  return TAP_BANDS.find(b => realRev <= b.max) || TAP_BANDS[TAP_BANDS.length-1];
+}
+
+function renderTapTable(activeBand){
+  const table = document.getElementById('tap-table');
+  const col = (b) => b.letter === activeBand.letter ? 'active-col' : '';
+
+  let html = `<thead><tr><th></th>`;
+  TAP_BANDS.forEach(b => html += `<th class="${col(b)}">${b.letter}</th>`);
+  html += `</tr></thead><tbody>`;
+
+  const rows = [
+    { label: "Real Revenue Range", get: b => b.range },
+    { label: "Real Revenue",       get: b => "100%" },
+    { label: "Profit",             get: b => b.profit + "%" },
+    { label: "Owner's Pay",        get: b => b.owner + "%" },
+    { label: "Tax",                get: b => b.tax + "%" },
+    { label: "Operating Expenses", get: b => b.opex + "%" },
+  ];
+  rows.forEach(r => {
+    html += `<tr><td class="rowlabel">${r.label}</td>`;
+    TAP_BANDS.forEach(b => html += `<td class="${col(b)}">${r.get(b)}</td>`);
+    html += `</tr>`;
+  });
+  html += `</tbody>`;
+  table.innerHTML = html;
+}
+
+function renderAllocBlock(containerId, tapPct, effectivePct, realRev, numOwners, overrideActive){
+  const container = document.getElementById(containerId);
+  const rows = [
+    {key:'profit', name:'Profit', accent:true},
+    {key:'owner', name:"Owner's Pay", accent:false},
+    {key:'tax', name:'Tax', accent:false},
+    {key:'opex', name:'Operating Expenses', accent:false},
+  ];
+  container.innerHTML = rows.map(r => {
+    const p = effectivePct[r.key];
+    const amt = realRev * p / 100;
+    const perOwner = r.key === 'owner'
+      ? `&nbsp;·&nbsp; <span class="amt">${fmt(amt / numOwners)}</span>/owner/yr`
+      : '';
+    const ov = overridePct[r.key];
+    const barClass = overrideActive ? 'override' : (r.accent ? 'accent' : '');
+    return `
+      <div class="alloc-row">
+        <div class="alloc-top">
+          <span class="alloc-name">${r.name}</span>
+          <span class="alloc-figs">
+            <span class="amt">${fmt(amt)}</span> / yr &nbsp;·&nbsp; ${p}%${perOwner}
+            &nbsp;&nbsp;<span class="target-ref">(target: ${tapPct[r.key]}%)</span>
+            &nbsp;&nbsp;<span class="override-cell"><label>override</label><input class="override-input ${ov!=null?'filled':''}" type="number" min="0" max="100" placeholder="—" value="${ov!=null?ov:''}" data-key="${r.key}" oninput="onOverrideInput(event)"></span>
+          </span>
+        </div>
+        <div class="bar-track"><div class="bar-fill ${barClass}" style="width:${Math.min(p,100)}%"></div></div>
+      </div>`;
+  }).join('');
+}
+
+function overrideFilledKeys(){
+  return ['profit','owner','tax','opex'].filter(k => overridePct[k] != null);
+}
+function overrideSum(){
+  return overrideFilledKeys().reduce((s,k) => s + overridePct[k], 0);
+}
+function overridesActive(){
+  const filled = overrideFilledKeys();
+  return filled.length === 4 && Math.abs(overrideSum() - 100) < 0.01;
+}
+
+function updateOverrideStatus(){
+  const el = document.getElementById('override-status');
+  const filled = overrideFilledKeys();
+  const sum = overrideSum();
+  if(filled.length === 0){
+    el.className = 'override-status info';
+    el.textContent = "Optional: type a % for any account to override the book's target — fill in all four so they total 100% to activate.";
+    return;
+  }
+  if(filled.length < 4){
+    const remaining = 100 - sum;
+    el.className = remaining < 0 ? 'override-status over' : 'override-status remaining';
+    el.textContent = remaining < 0
+      ? `Custom % so far: ${sum}% — already ${Math.abs(remaining).toFixed(0)}% over 100%, with ${4-filled.length} account${4-filled.length>1?'s':''} still blank.`
+      : `Custom % so far: ${sum}% across ${filled.length} account${filled.length>1?'s':''} · ${remaining}% left to assign to the other ${4-filled.length}.`;
+    return;
+  }
+  if(Math.abs(sum - 100) < 0.01){
+    el.className = 'override-status active';
+    el.textContent = `\u2713 Custom percentages total 100% — using your numbers below instead of the book's target.`;
+  } else if(sum > 100){
+    el.className = 'override-status over';
+    el.textContent = `Custom % total ${sum}% — ${(sum-100).toFixed(0)}% over 100%. Reduce something before it takes effect.`;
+  } else {
+    el.className = 'override-status remaining';
+    el.textContent = `Custom % total ${sum}% — ${(100-sum).toFixed(0)}% short of 100%. Add the rest before it takes effect.`;
+  }
+}
+
+function onOverrideInput(e){
+  const key = e.target.dataset.key;
+  const raw = e.target.value;
+  overridePct[key] = raw === '' ? null : Math.max(0, Math.min(100, parseFloat(raw)));
+  saveOverviewInputs();
+  recalc();
+  const el = document.querySelector(`.override-input[data-key="${key}"]`);
+  if(el){ el.focus(); try{ const len = el.value.length; el.setSelectionRange(len,len); }catch(err){} }
+}
+
+function recalc(){
+  const revenue = parseFloat(document.getElementById('revenue').value) || 0;
+  const matcost = parseFloat(document.getElementById('matcost').value) || 0;
+  const numOwners = Math.max(parseFloat(document.getElementById('numowners').value) || 1, 1);
+  const drawsPerMonth = Math.max(parseFloat(document.getElementById('drawspermonth').value) || 1, 1);
+  const drawsPerYear = drawsPerMonth * 12;
+  const realRev = Math.max(revenue - matcost, 0);
+
+  document.getElementById('realrev-out').textContent = fmt(realRev);
+
+  const band = getBand(realRev);
+  renderTapTable(band);
+  document.getElementById('band-note').textContent = `Revenue band: ${band.label} — this is the TAP mix the book targets at this size.`;
+
+  const tap = { profit: band.profit, owner: band.owner, tax: band.tax, opex: band.opex };
+  const overrideActive = overridesActive();
+  const effective = overrideActive
+    ? { profit: overridePct.profit, owner: overridePct.owner, tax: overridePct.tax, opex: overridePct.opex }
+    : tap;
+  renderAllocBlock('tap-alloc', tap, effective, realRev, numOwners, overrideActive);
+  updateOverrideStatus();
+
+  const profitAmt = realRev * effective.profit/100;
+  const ownerAmt = realRev * effective.owner/100;
+  const opexAmt = realRev * effective.opex/100;
+  const ownerEachYr = ownerAmt / numOwners;
+  const ownerEachDraw = ownerEachYr / drawsPerYear;
+
+  document.getElementById('c-profit-amt').textContent = fmt(profitAmt);
+  document.getElementById('c-owner-amt').textContent = fmt(ownerAmt);
+  document.getElementById('c-owner-pct').textContent = effective.owner + '%';
+  document.getElementById('c-numowners').textContent = numOwners;
+  document.getElementById('c-owner-each-yr').textContent = fmt(ownerEachYr);
+  document.getElementById('c-owner-each-draw').textContent = fmt(ownerEachDraw);
+  document.getElementById('c-opex-amt').textContent = fmt(opexAmt);
+
+  const qProfit = profitAmt/4;
+  document.getElementById('q-profit').textContent = fmt(qProfit);
+  document.getElementById('q-dist').textContent = fmt(qProfit*0.5);
+  document.getElementById('q-stay').textContent = fmt(qProfit*0.5);
+  document.getElementById('q-dist-each').textContent = fmt((qProfit*0.5)/numOwners);
+
+  document.getElementById('draws-count-label').textContent = numOwners;
+  document.getElementById('draw-schedule-label').textContent = `Owner's pay draw schedule — ${numOwners} owners, ${drawsPerMonth}× / month (${drawsPerYear} draws / year)`;
+  document.getElementById('d-owner-yr').textContent = fmt(ownerEachYr);
+  document.getElementById('d-owner-draw').textContent = fmt(ownerEachDraw);
+  document.getElementById('d-owner-total').textContent = fmt(ownerAmt);
+  document.getElementById('d-draws-yr').textContent = drawsPerYear;
+}
+
+// ---- persistence: save/load/reset for the Overview page ----
+let overridePct = { profit:null, owner:null, tax:null, opex:null };
+
+function loadOverviewInputs(){
+  let saved = {};
+  try{ saved = JSON.parse(localStorage.getItem(OVERVIEW_KEY)) || {}; }catch(e){}
+  const vals = Object.assign({}, OVERVIEW_DEFAULTS, saved);
+  document.getElementById('revenue').value = vals.revenue;
+  document.getElementById('matcost').value = vals.matcost;
+  document.getElementById('numowners').value = vals.numowners;
+  document.getElementById('drawspermonth').value = vals.drawspermonth;
+  overridePct = Object.assign({ profit:null, owner:null, tax:null, opex:null }, vals.overridePct || {});
+}
+
+function saveOverviewInputs(){
+  const vals = {
+    revenue: document.getElementById('revenue').value,
+    matcost: document.getElementById('matcost').value,
+    numowners: document.getElementById('numowners').value,
+    drawspermonth: document.getElementById('drawspermonth').value,
+    overridePct: overridePct,
+  };
+  try{ localStorage.setItem(OVERVIEW_KEY, JSON.stringify(vals)); }catch(e){}
+}
+
+function onOverviewInput(){
+  saveOverviewInputs();
+  recalc();
+}
+
+function resetOverview(){
+  try{ localStorage.removeItem(OVERVIEW_KEY); }catch(e){}
+  document.getElementById('revenue').value = OVERVIEW_DEFAULTS.revenue;
+  document.getElementById('matcost').value = OVERVIEW_DEFAULTS.matcost;
+  document.getElementById('numowners').value = OVERVIEW_DEFAULTS.numowners;
+  document.getElementById('drawspermonth').value = OVERVIEW_DEFAULTS.drawspermonth;
+  overridePct = { profit:null, owner:null, tax:null, opex:null };
+  recalc();
+}
+
+function resetAllData(){
+  const ok = confirm('Reset every saved number on every page back to defaults? This cannot be undone.');
+  if(!ok) return;
+  Object.keys(localStorage)
+    .filter(k => k.indexOf('profitFirst.') === 0)
+    .forEach(k => localStorage.removeItem(k));
+  loadOverviewInputs();
+  recalc();
+  showPage('overview');
+}
+
+// ===================================================================
+// INIT
+// ===================================================================
+buildChapterPages();
+renderTabs();
+showPage(currentPage);
+loadOverviewInputs();
+recalc();
+</script>
+</body>
+</html>
