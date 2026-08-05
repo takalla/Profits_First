@@ -140,23 +140,25 @@
 
   /* TAP table — reproduced in the book's own style: grey header, black rule, letter-coded bands */
   .tap-table-wrap{ border:2px solid var(--table-border); margin-bottom:14px; }
-  table.tap-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.tap-table{ width:100%; table-layout:fixed; border-collapse:collapse; font-size:13.5px; }
+  table.tap-table col.rowlabel-col{ width:19%; }
   table.tap-table th{
     text-align:center; font-family: ui-sans-serif, sans-serif; font-size:13px; font-weight:700;
-    color:#ffffff; background:var(--grey-head); padding:10px 8px; border:1px solid var(--table-border);
+    color:#ffffff; background:var(--grey-head); padding:10px 6px; border:1px solid var(--table-border);
+    overflow:hidden; text-overflow:ellipsis;
   }
   table.tap-table th:first-child{ background:var(--grey-head); }
   table.tap-table td{
-    padding:11px 10px; border:1px solid var(--table-border); font-family: ui-sans-serif, sans-serif;
-    text-align:center; background:#fff;
+    padding:11px 8px; border:1px solid var(--table-border); font-family: ui-sans-serif, sans-serif;
+    text-align:center; background:#fff; overflow:hidden; text-overflow:ellipsis;
   }
   table.tap-table td.rowlabel{ text-align:left; font-weight:700; background:#fafafa; }
   table.tap-table th.active-col, table.tap-table td.active-col{ background:var(--accent-dim); }
   table.tap-table td.active-col{ font-weight:800; }
   table.tap-table th.yours-col{ background:#5b21b6; }
-  table.tap-table td.yours-cell{ background:#f4f0ff; padding:6px 8px; }
+  table.tap-table td.yours-cell{ background:#f4f0ff; padding:6px 6px; }
   .yours-input{
-    width:100%; padding:7px 4px; font-family:ui-monospace,monospace; font-size:13px; text-align:center;
+    width:100%; box-sizing:border-box; padding:7px 2px; font-family:ui-monospace,monospace; font-size:13px; text-align:center;
     border:1.5px solid #8b5cf6; border-radius:4px; background:white; color:var(--ink);
   }
   .yours-input.filled{ background:#ede9fe; font-weight:700; }
@@ -924,7 +926,8 @@ function renderTapTable(activeBand){
   const table = document.getElementById('tap-table');
   const col = (b) => b.letter === activeBand.letter ? 'active-col' : '';
 
-  let html = `<thead><tr><th></th>`;
+  let html = `<colgroup><col class="rowlabel-col">${TAP_BANDS.map(()=>'<col>').join('')}<col></colgroup>`;
+  html += `<thead><tr><th></th>`;
   TAP_BANDS.forEach(b => html += `<th class="${col(b)}">${b.letter}</th>`);
   html += `<th class="yours-col">Yours</th>`;
   html += `</tr></thead><tbody>`;
@@ -942,7 +945,7 @@ function renderTapTable(activeBand){
     TAP_BANDS.forEach(b => html += `<td class="${col(b)}">${r.get(b)}</td>`);
     if(r.key){
       const ov = overridePct[r.key];
-      html += `<td class="yours-cell"><input class="yours-input ${ov!=null?'filled':''}" type="number" min="0" max="100" placeholder="\u2014" value="${ov!=null?ov:''}" data-key="${r.key}" oninput="onOverrideInput(event)"></td>`;
+      html += `<td class="yours-cell"><input class="yours-input ${ov!=null?'filled':''}" type="text" inputmode="decimal" placeholder="\u2014" value="${ov!=null?ov:''}" data-key="${r.key}" oninput="onOverrideInput(event)"></td>`;
     } else {
       html += `<td class="yours-cell"><span class="yours-static">${r.label==='Real Revenue' ? '100%' : '\u2014'}</span></td>`;
     }
@@ -979,11 +982,17 @@ function renderAllocBlock(containerId, tapPct, effectivePct, realRev, numOwners,
   }).join('');
 }
 
+function overrideNum(k){
+  const v = overridePct[k];
+  if(v == null || v === '' || v === '.') return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
 function overrideFilledKeys(){
-  return ['profit','owner','tax','opex'].filter(k => overridePct[k] != null);
+  return ['profit','owner','tax','opex'].filter(k => overrideNum(k) != null);
 }
 function overrideSum(){
-  return overrideFilledKeys().reduce((s,k) => s + overridePct[k], 0);
+  return overrideFilledKeys().reduce((s,k) => s + overrideNum(k), 0);
 }
 function overridesActive(){
   const filled = overrideFilledKeys();
@@ -1021,12 +1030,16 @@ function updateOverrideStatus(){
 
 function onOverrideInput(e){
   const key = e.target.dataset.key;
-  const raw = e.target.value;
-  overridePct[key] = raw === '' ? null : Math.max(0, Math.min(100, parseFloat(raw)));
+  let clean = e.target.value.replace(/[^0-9.]/g, '');
+  const firstDot = clean.indexOf('.');
+  if(firstDot !== -1){
+    clean = clean.slice(0, firstDot+1) + clean.slice(firstDot+1).replace(/\./g, '');
+  }
+  overridePct[key] = clean === '' ? null : clean; // keep the raw typed string so "37." doesn't collapse mid-type
   saveOverviewInputs();
   recalc();
   const el = document.querySelector(`.yours-input[data-key="${key}"]`);
-  if(el){ el.focus(); try{ const len = el.value.length; el.setSelectionRange(len,len); }catch(err){} }
+  if(el){ el.focus(); const len = el.value.length; el.setSelectionRange(len,len); }
 }
 
 function recalc(){
@@ -1046,7 +1059,7 @@ function recalc(){
   const tap = { profit: band.profit, owner: band.owner, tax: band.tax, opex: band.opex };
   const overrideActive = overridesActive();
   const effective = overrideActive
-    ? { profit: overridePct.profit, owner: overridePct.owner, tax: overridePct.tax, opex: overridePct.opex }
+    ? { profit: overrideNum('profit'), owner: overrideNum('owner'), tax: overrideNum('tax'), opex: overrideNum('opex') }
     : tap;
   renderAllocBlock('tap-alloc', tap, effective, realRev, numOwners, overrideActive);
   updateOverrideStatus();
