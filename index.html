@@ -153,6 +153,15 @@
   table.tap-table td.rowlabel{ text-align:left; font-weight:700; background:#fafafa; }
   table.tap-table th.active-col, table.tap-table td.active-col{ background:var(--accent-dim); }
   table.tap-table td.active-col{ font-weight:800; }
+  table.tap-table th.yours-col{ background:#5b21b6; }
+  table.tap-table td.yours-cell{ background:#f4f0ff; padding:6px 8px; }
+  .yours-input{
+    width:100%; padding:7px 4px; font-family:ui-monospace,monospace; font-size:13px; text-align:center;
+    border:1.5px solid #8b5cf6; border-radius:4px; background:white; color:var(--ink);
+  }
+  .yours-input.filled{ background:#ede9fe; font-weight:700; }
+  .yours-input:focus{ outline:2px solid #8b5cf6; outline-offset:1px; }
+  .yours-static{ color:#8a968f; font-family:ui-monospace,monospace; font-size:12.5px; }
   .tap-caption{ font-family: Georgia, serif; font-weight:600; font-size:13.5px; text-align:center; padding:10px 0 18px; color:var(--ink); }
 
   .band-note{
@@ -172,17 +181,9 @@
   .bar-fill.accent{ background:var(--accent); }
   .bar-fill.override{ background:#8b5cf6; }
 
-  .override-cell{ display:flex; align-items:center; gap:6px; }
-  .override-cell label{ font-family:ui-monospace,monospace; font-size:10px; text-transform:uppercase; color:#8a968f; }
-  .override-input{
-    width:56px; padding:5px 6px; font-family:ui-monospace,monospace; font-size:13px; text-align:right;
-    border:1.5px solid var(--line); border-radius:5px; background:var(--paper-dim); color:var(--ink);
-  }
-  .override-input:focus{ outline:2px solid #8b5cf6; outline-offset:1px; background:white; }
-  .override-input.filled{ border-color:#8b5cf6; background:#f4f0ff; }
   .target-ref{ font-family:ui-monospace,monospace; font-size:11px; color:#8a968f; }
   .override-status{
-    margin-top:14px; padding:12px 16px; border-radius:6px; font-family:ui-monospace,monospace; font-size:13px;
+    margin: 14px 0 24px; padding:12px 16px; border-radius:6px; font-family:ui-monospace,monospace; font-size:13px;
   }
   .override-status.info{ background:var(--paper-dim); color:#5c6b62; }
   .override-status.remaining{ background:#f4f0ff; color:#5b21b6; border-left:3px solid #8b5cf6; }
@@ -398,18 +399,18 @@
   <div class="panel">
     <div class="panel-tab">02 · Target allocation</div>
     <h2>The Profit First percentage table</h2>
-    <p class="section-desc">The book publishes Target Allocation Percentages (TAPs) by revenue band — the mix a healthy business at your size is aiming for. Your row is highlighted below.</p>
+    <p class="section-desc">The book publishes Target Allocation Percentages (TAPs) by revenue band — the mix a healthy business at your size is aiming for. Your column is highlighted below. Want your own split instead? Type it straight into the purple "Yours" column — fill in all four percentages so they total 100% to activate it.</p>
 
     <div class="subhead">Figure 4 — Target Allocation Percentages (TAPs), from the book</div>
     <div class="tap-table-wrap">
       <table class="tap-table" id="tap-table"></table>
     </div>
-    <div class="tap-caption">Your revenue lands in the highlighted column</div>
+    <div class="tap-caption">Your revenue lands in the highlighted column · type your own split into "Yours" on the right</div>
+    <div class="override-status" id="override-status"></div>
 
     <div class="subhead">Your numbers, applied</div>
     <div class="band-note" id="band-note">Revenue band: —</div>
     <div id="tap-alloc"></div>
-    <div class="override-status" id="override-status"></div>
   </div>
 
   <!-- SECTION 03: NARRATIVE CALLOUTS -->
@@ -925,19 +926,26 @@ function renderTapTable(activeBand){
 
   let html = `<thead><tr><th></th>`;
   TAP_BANDS.forEach(b => html += `<th class="${col(b)}">${b.letter}</th>`);
+  html += `<th class="yours-col">Yours</th>`;
   html += `</tr></thead><tbody>`;
 
   const rows = [
-    { label: "Real Revenue Range", get: b => b.range },
-    { label: "Real Revenue",       get: b => "100%" },
-    { label: "Profit",             get: b => b.profit + "%" },
-    { label: "Owner's Pay",        get: b => b.owner + "%" },
-    { label: "Tax",                get: b => b.tax + "%" },
-    { label: "Operating Expenses", get: b => b.opex + "%" },
+    { key:null,    label: "Real Revenue Range", get: b => b.range },
+    { key:null,    label: "Real Revenue",       get: b => "100%" },
+    { key:'profit',label: "Profit",             get: b => b.profit + "%" },
+    { key:'owner', label: "Owner's Pay",        get: b => b.owner + "%" },
+    { key:'tax',   label: "Tax",                get: b => b.tax + "%" },
+    { key:'opex',  label: "Operating Expenses", get: b => b.opex + "%" },
   ];
   rows.forEach(r => {
     html += `<tr><td class="rowlabel">${r.label}</td>`;
     TAP_BANDS.forEach(b => html += `<td class="${col(b)}">${r.get(b)}</td>`);
+    if(r.key){
+      const ov = overridePct[r.key];
+      html += `<td class="yours-cell"><input class="yours-input ${ov!=null?'filled':''}" type="number" min="0" max="100" placeholder="\u2014" value="${ov!=null?ov:''}" data-key="${r.key}" oninput="onOverrideInput(event)"></td>`;
+    } else {
+      html += `<td class="yours-cell"><span class="yours-static">${r.label==='Real Revenue' ? '100%' : '\u2014'}</span></td>`;
+    }
     html += `</tr>`;
   });
   html += `</tbody>`;
@@ -958,17 +966,13 @@ function renderAllocBlock(containerId, tapPct, effectivePct, realRev, numOwners,
     const perOwner = r.key === 'owner'
       ? `&nbsp;·&nbsp; <span class="amt">${fmt(amt / numOwners)}</span>/owner/yr`
       : '';
-    const ov = overridePct[r.key];
+    const targetNote = overrideActive ? `&nbsp;&nbsp;<span class="target-ref">(book target: ${tapPct[r.key]}%)</span>` : '';
     const barClass = overrideActive ? 'override' : (r.accent ? 'accent' : '');
     return `
       <div class="alloc-row">
         <div class="alloc-top">
           <span class="alloc-name">${r.name}</span>
-          <span class="alloc-figs">
-            <span class="amt">${fmt(amt)}</span> / yr &nbsp;·&nbsp; ${p}%${perOwner}
-            &nbsp;&nbsp;<span class="target-ref">(target: ${tapPct[r.key]}%)</span>
-            &nbsp;&nbsp;<span class="override-cell"><label>override</label><input class="override-input ${ov!=null?'filled':''}" type="number" min="0" max="100" placeholder="—" value="${ov!=null?ov:''}" data-key="${r.key}" oninput="onOverrideInput(event)"></span>
-          </span>
+          <span class="alloc-figs"><span class="amt">${fmt(amt)}</span> / yr &nbsp;·&nbsp; ${p}%${perOwner}${targetNote}</span>
         </div>
         <div class="bar-track"><div class="bar-fill ${barClass}" style="width:${Math.min(p,100)}%"></div></div>
       </div>`;
@@ -1021,7 +1025,7 @@ function onOverrideInput(e){
   overridePct[key] = raw === '' ? null : Math.max(0, Math.min(100, parseFloat(raw)));
   saveOverviewInputs();
   recalc();
-  const el = document.querySelector(`.override-input[data-key="${key}"]`);
+  const el = document.querySelector(`.yours-input[data-key="${key}"]`);
   if(el){ el.focus(); try{ const len = el.value.length; el.setSelectionRange(len,len); }catch(err){} }
 }
 
