@@ -192,6 +192,21 @@
   .override-status.over{ background:#fdf3f2; color:var(--red); border-left:3px solid var(--red); }
   .override-status.active{ background:#f4f0ff; color:#5b21b6; border-left:3px solid #8b5cf6; font-weight:600; }
 
+  /* coverage check: owner minimums + opex needed */
+  .owner-min-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:14px; margin-bottom:6px; }
+  .coverage-result{
+    margin-top:14px; padding:14px 18px; border-radius:8px; font-size:14px; line-height:1.6; color:#28362f;
+  }
+  .coverage-result b{ font-family:ui-monospace,monospace; color:var(--ink); }
+  .coverage-result.info{ background:var(--paper-dim); color:#5c6b62; font-family:ui-monospace,monospace; font-size:13px; }
+  .coverage-result.ok{ background:#eef7e8; border-left:3px solid var(--accent); }
+  .coverage-result.short{ background:#fdf3f2; border-left:3px solid var(--red); }
+  .apply-btn{
+    display:inline-block; margin-top:10px; font-family:ui-monospace,monospace; font-size:12px;
+    background:var(--ink); color:var(--accent-dim); border:none; border-radius:5px; padding:8px 12px; cursor:pointer;
+  }
+  .apply-btn:hover{ background:#0f2a5c; }
+
   /* narrative callouts */
   .callout{
     font-size:15.5px; color:#28362f; background:var(--paper-dim); border:1px solid var(--line);
@@ -377,15 +392,15 @@
     <div class="input-grid">
       <div class="field">
         <label for="revenue">Annual revenue</label>
-        <div class="input-wrap"><span>$</span><input class="with-dollar" type="number" id="revenue" value="600000" min="0" oninput="onOverviewInput()"></div>
+        <div class="input-wrap"><span>$</span><input class="with-dollar money-input" type="text" inputmode="numeric" id="revenue" value="600,000" oninput="onMoneyFieldInput(event)"></div>
       </div>
       <div class="field">
         <label for="matcost">Materials / subcontractors</label>
-        <div class="input-wrap"><span>$</span><input class="with-dollar" type="number" id="matcost" value="120000" min="0" oninput="onOverviewInput()"></div>
+        <div class="input-wrap"><span>$</span><input class="with-dollar money-input" type="text" inputmode="numeric" id="matcost" value="120,000" oninput="onMoneyFieldInput(event)"></div>
       </div>
       <div class="field">
         <label for="numowners">Number of owners</label>
-        <input type="number" id="numowners" value="4" min="1" oninput="onOverviewInput()">
+        <input type="number" id="numowners" value="4" min="1" oninput="onNumOwnersInput()">
       </div>
       <div class="field">
         <label for="drawspermonth">Owner draws / month</label>
@@ -397,9 +412,31 @@
     <div class="save-note">◆ saved automatically to this browser — use "reset this page" above to clear just these numbers, or "reset all data" up top to wipe every page</div>
   </div>
 
-  <!-- SECTION 02: TAPS -->
+  <!-- SECTION 02: COVERAGE CHECK -->
   <div class="panel">
-    <div class="panel-tab">02 · Target allocation</div>
+    <div class="panel-tab">02 · Coverage check</div>
+    <h2>What do you actually need to cover?</h2>
+    <p class="section-desc">Optional reality checks — enter real minimums below and see the % of Real Revenue required to cover them, compared against what's currently allocated.</p>
+
+    <div class="subhead">Owner minimum monthly draws</div>
+    <p class="section-desc" style="margin-bottom:14px;">Owner's Pay is split equally across all owners — so the pool has to be big enough that even the owner with the highest personal minimum gets covered, which means covering that same amount for everyone.</p>
+    <div class="owner-min-grid" id="owner-min-grid"></div>
+    <div class="coverage-result" id="owner-min-result"></div>
+
+    <div class="subhead" style="margin-top:30px;">Monthly Operating Expenses needed</div>
+    <p class="section-desc" style="margin-bottom:14px;">What it actually costs to run the business each month — payroll, tools, rent, ads, everything that comes out of Operating Expenses.</p>
+    <div class="input-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+      <div class="field">
+        <label for="monthlyopex">Monthly OpEx needed</label>
+        <div class="input-wrap"><span>$</span><input class="with-dollar money-input" type="text" inputmode="numeric" id="monthlyopex" placeholder="0" oninput="onMoneyFieldInput(event)"></div>
+      </div>
+    </div>
+    <div class="coverage-result" id="opex-need-result"></div>
+  </div>
+
+  <!-- SECTION 03: TAPS -->
+  <div class="panel">
+    <div class="panel-tab">03 · Target allocation</div>
     <h2>The Profit First percentage table</h2>
     <p class="section-desc">The book publishes Target Allocation Percentages (TAPs) by revenue band — the mix a healthy business at your size is aiming for. Your column is highlighted below. Want your own split instead? Type it straight into the purple "Yours" column — fill in all four percentages so they total 100% to activate it.</p>
 
@@ -415,9 +452,9 @@
     <div id="tap-alloc"></div>
   </div>
 
-  <!-- SECTION 03: NARRATIVE CALLOUTS -->
+  <!-- SECTION 04: NARRATIVE CALLOUTS -->
   <div class="panel">
-    <div class="panel-tab">03 · What this means</div>
+    <div class="panel-tab">04 · What this means</div>
     <h2>What this means, in plain terms</h2>
     <div class="callout" id="callout-profit">
       At the target rate, this business sets aside <span class="num" id="c-profit-amt">$0</span> in profit per year — before a single bill gets paid.
@@ -430,9 +467,9 @@
     </div>
   </div>
 
-  <!-- SECTION 04: QUARTERLY + OWNER DRAWS -->
+  <!-- SECTION 05: QUARTERLY + OWNER DRAWS -->
   <div class="panel">
-    <div class="panel-tab">04 · Distributions</div>
+    <div class="panel-tab">05 · Distributions</div>
     <h2>Quarterly profit &amp; owner draws</h2>
     <p class="section-desc">Every quarter, half the Profit Account balance gets distributed to the owners as a reward; the rest stays as a cushion. Owner's Pay is drawn on a fixed schedule instead — here's both, split across <span id="draws-count-label">4</span> owners.</p>
 
@@ -918,6 +955,40 @@ function fmt(n){
   return '$' + Math.round(n).toLocaleString('en-US');
 }
 
+// reads a comma-formatted money input's numeric value
+function numFromEl(id){
+  const el = document.getElementById(id);
+  if(!el) return 0;
+  return parseFloat((el.value || '').replace(/[^0-9.]/g, '')) || 0;
+}
+
+// reformats a money input's value with thousands separators in place, preserving cursor position
+function formatMoneyInPlace(el){
+  const cursorPos = el.selectionStart == null ? el.value.length : el.selectionStart;
+  const digitsBeforeCursor = el.value.slice(0, cursorPos).replace(/[^0-9]/g, '').length;
+  const digits = el.value.replace(/[^0-9]/g, '');
+  const formatted = digits === '' ? '' : Number(digits).toLocaleString('en-US');
+  el.value = formatted;
+  let pos = formatted.length;
+  if(digitsBeforeCursor === 0){
+    pos = 0;
+  } else {
+    let count = 0;
+    for(let i=0;i<formatted.length;i++){
+      if(/[0-9]/.test(formatted[i])) count++;
+      if(count === digitsBeforeCursor){ pos = i+1; break; }
+    }
+  }
+  try{ el.setSelectionRange(pos,pos); }catch(err){}
+  return digits;
+}
+
+function onMoneyFieldInput(e){
+  formatMoneyInPlace(e.target);
+  saveOverviewInputs();
+  recalc();
+}
+
 function getBand(realRev){
   return TAP_BANDS.find(b => realRev <= b.max) || TAP_BANDS[TAP_BANDS.length-1];
 }
@@ -1042,9 +1113,90 @@ function onOverrideInput(e){
   if(el){ el.focus(); const len = el.value.length; el.setSelectionRange(len,len); }
 }
 
+function renderOwnerMinInputs(){
+  const n = Math.max(parseInt(document.getElementById('numowners').value) || 1, 1);
+  const resized = [];
+  for(let i=0;i<n;i++){ resized.push(ownerMins[i] !== undefined ? ownerMins[i] : null); }
+  ownerMins = resized;
+  const grid = document.getElementById('owner-min-grid');
+  grid.innerHTML = ownerMins.map((v,i) => `
+    <div class="field owner-min-field">
+      <label>Owner ${i+1} min / mo</label>
+      <div class="input-wrap"><span>$</span><input class="with-dollar money-input owner-min-input" type="text" inputmode="numeric" data-idx="${i}" value="${v!=null ? Number(v).toLocaleString('en-US') : ''}" placeholder="0" oninput="onOwnerMinInput(event)"></div>
+    </div>`).join('');
+}
+
+function onOwnerMinInput(e){
+  const idx = parseInt(e.target.dataset.idx, 10);
+  const digits = formatMoneyInPlace(e.target);
+  ownerMins[idx] = digits === '' ? null : digits;
+  saveOverviewInputs();
+  recalc();
+}
+
+function onNumOwnersInput(){
+  renderOwnerMinInputs();
+  saveOverviewInputs();
+  recalc();
+}
+
+function renderCoverageResults(realRev, numOwners, effective){
+  const ownerResultEl = document.getElementById('owner-min-result');
+  const filledMins = ownerMins.filter(v => v != null).map(v => parseFloat(v)).filter(v => !isNaN(v));
+  if(filledMins.length === 0){
+    ownerResultEl.className = 'coverage-result info';
+    ownerResultEl.textContent = "Enter at least one owner's minimum above to see what Owner's Pay needs to cover.";
+    coverage.requiredOwnerPct = 0; coverage.requiredOwnerAnnual = 0;
+  } else {
+    const highest = Math.max(...filledMins);
+    const reqAnnual = highest * numOwners * 12;
+    const reqPct = realRev > 0 ? (reqAnnual/realRev*100) : 0;
+    coverage.requiredOwnerPct = reqPct; coverage.requiredOwnerAnnual = reqAnnual;
+    const effAnnual = realRev * effective.owner/100;
+    const covered = effAnnual >= reqAnnual - 0.5;
+    ownerResultEl.className = 'coverage-result ' + (covered ? 'ok' : 'short');
+    ownerResultEl.innerHTML = `Highest owner minimum: <b>${fmt(highest)}</b>/mo \u00d7 ${numOwners} owners \u00d7 12 = <b>${fmt(reqAnnual)}</b>/yr needed for Owner's Pay \u2014 that's <b>${reqPct.toFixed(1)}%</b> of Real Revenue.<br>
+      Currently allocated: <b>${fmt(effAnnual)}</b>/yr (${effective.owner}%) \u2014 ${covered ? '\u2713 covered' : '\u26A0 short by ' + fmt(reqAnnual-effAnnual) + '/yr'}.<br>
+      <button class="apply-btn" onclick="applyRequiredOwnerPct()">Use ${reqPct.toFixed(1)}% as the Owner's Pay override \u2192</button>`;
+  }
+
+  const opexResultEl = document.getElementById('opex-need-result');
+  const opexNeedRaw = numFromEl('monthlyopex');
+  if(opexNeedRaw <= 0){
+    opexResultEl.className = 'coverage-result info';
+    opexResultEl.textContent = "Enter your monthly OpEx need above to see what % of revenue it requires.";
+    coverage.requiredOpexPct = 0; coverage.requiredOpexAnnual = 0;
+  } else {
+    const reqAnnual = opexNeedRaw * 12;
+    const reqPct = realRev > 0 ? (reqAnnual/realRev*100) : 0;
+    coverage.requiredOpexPct = reqPct; coverage.requiredOpexAnnual = reqAnnual;
+    const effAnnual = realRev * effective.opex/100;
+    const covered = effAnnual >= reqAnnual - 0.5;
+    opexResultEl.className = 'coverage-result ' + (covered ? 'ok' : 'short');
+    opexResultEl.innerHTML = `${fmt(opexNeedRaw)}/mo \u00d7 12 = <b>${fmt(reqAnnual)}</b>/yr needed for Operating Expenses \u2014 that's <b>${reqPct.toFixed(1)}%</b> of Real Revenue.<br>
+      Currently allocated: <b>${fmt(effAnnual)}</b>/yr (${effective.opex}%) \u2014 ${covered ? '\u2713 covered' : '\u26A0 short by ' + fmt(reqAnnual-effAnnual) + '/yr'}.<br>
+      <button class="apply-btn" onclick="applyRequiredOpexPct()">Use ${reqPct.toFixed(1)}% as the OpEx override \u2192</button>`;
+  }
+}
+
+function applyRequiredOwnerPct(){
+  if(coverage.requiredOwnerPct > 0){
+    overridePct.owner = coverage.requiredOwnerPct.toFixed(1);
+    saveOverviewInputs();
+    recalc();
+  }
+}
+function applyRequiredOpexPct(){
+  if(coverage.requiredOpexPct > 0){
+    overridePct.opex = coverage.requiredOpexPct.toFixed(1);
+    saveOverviewInputs();
+    recalc();
+  }
+}
+
 function recalc(){
-  const revenue = parseFloat(document.getElementById('revenue').value) || 0;
-  const matcost = parseFloat(document.getElementById('matcost').value) || 0;
+  const revenue = numFromEl('revenue');
+  const matcost = numFromEl('matcost');
   const numOwners = Math.max(parseFloat(document.getElementById('numowners').value) || 1, 1);
   const drawsPerMonth = Math.max(parseFloat(document.getElementById('drawspermonth').value) || 1, 1);
   const drawsPerYear = drawsPerMonth * 12;
@@ -1063,6 +1215,7 @@ function recalc(){
     : tap;
   renderAllocBlock('tap-alloc', tap, effective, realRev, numOwners, overrideActive);
   updateOverrideStatus();
+  renderCoverageResults(realRev, numOwners, effective);
 
   const profitAmt = realRev * effective.profit/100;
   const ownerAmt = realRev * effective.owner/100;
@@ -1094,25 +1247,32 @@ function recalc(){
 
 // ---- persistence: save/load/reset for the Overview page ----
 let overridePct = { profit:null, owner:null, tax:null, opex:null };
+let ownerMins = [];
+let coverage = { requiredOwnerPct:0, requiredOwnerAnnual:0, requiredOpexPct:0, requiredOpexAnnual:0 };
 
 function loadOverviewInputs(){
   let saved = {};
   try{ saved = JSON.parse(localStorage.getItem(OVERVIEW_KEY)) || {}; }catch(e){}
   const vals = Object.assign({}, OVERVIEW_DEFAULTS, saved);
-  document.getElementById('revenue').value = vals.revenue;
-  document.getElementById('matcost').value = vals.matcost;
+  document.getElementById('revenue').value = Number(vals.revenue || 0).toLocaleString('en-US');
+  document.getElementById('matcost').value = Number(vals.matcost || 0).toLocaleString('en-US');
   document.getElementById('numowners').value = vals.numowners;
   document.getElementById('drawspermonth').value = vals.drawspermonth;
+  document.getElementById('monthlyopex').value = vals.monthlyOpexNeed ? Number(vals.monthlyOpexNeed).toLocaleString('en-US') : '';
   overridePct = Object.assign({ profit:null, owner:null, tax:null, opex:null }, vals.overridePct || {});
+  ownerMins = Array.isArray(vals.ownerMins) ? vals.ownerMins : [];
+  renderOwnerMinInputs();
 }
 
 function saveOverviewInputs(){
   const vals = {
-    revenue: document.getElementById('revenue').value,
-    matcost: document.getElementById('matcost').value,
+    revenue: numFromEl('revenue'),
+    matcost: numFromEl('matcost'),
     numowners: document.getElementById('numowners').value,
     drawspermonth: document.getElementById('drawspermonth').value,
+    monthlyOpexNeed: numFromEl('monthlyopex'),
     overridePct: overridePct,
+    ownerMins: ownerMins,
   };
   try{ localStorage.setItem(OVERVIEW_KEY, JSON.stringify(vals)); }catch(e){}
 }
@@ -1124,11 +1284,14 @@ function onOverviewInput(){
 
 function resetOverview(){
   try{ localStorage.removeItem(OVERVIEW_KEY); }catch(e){}
-  document.getElementById('revenue').value = OVERVIEW_DEFAULTS.revenue;
-  document.getElementById('matcost').value = OVERVIEW_DEFAULTS.matcost;
+  document.getElementById('revenue').value = Number(OVERVIEW_DEFAULTS.revenue).toLocaleString('en-US');
+  document.getElementById('matcost').value = Number(OVERVIEW_DEFAULTS.matcost).toLocaleString('en-US');
   document.getElementById('numowners').value = OVERVIEW_DEFAULTS.numowners;
   document.getElementById('drawspermonth').value = OVERVIEW_DEFAULTS.drawspermonth;
+  document.getElementById('monthlyopex').value = '';
   overridePct = { profit:null, owner:null, tax:null, opex:null };
+  ownerMins = [];
+  renderOwnerMinInputs();
   recalc();
 }
 
